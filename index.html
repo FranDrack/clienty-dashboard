@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clienty · Dashboard Marketing</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#F7F8FA; --surface:#fff; --surface2:#F0F2F5; --border:#E4E7EC;
+  --text:#101828; --text2:#475467; --text3:#98A2B3;
+  --accent:#210DFF; --accent-light:#E8E5FF;
+  --green:#00E3AA; --green-bg:#E0FBF5;
+  --yellow:#FFDB09; --yellow-bg:#FFFDE5;
+  --orange:#FF6242; --orange-bg:#FFF0ED;
+  --red:#FF6242; --red-bg:#FFF0ED;
+  --r:12px; --sh:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.06);
+  --sh-md:0 4px 8px -2px rgba(16,24,40,.1),0 2px 4px -2px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* SIDEBAR */
+.sb{position:fixed;top:0;left:0;width:220px;height:100vh;background:#00214D;display:flex;flex-direction:column;z-index:100}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-logo .name{font-size:18px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.sb-logo .sub{font-size:11px;color:rgba(255,255,255,.35);margin-top:2px}
+.sb-nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:3px;overflow-y:auto}
+.nav-lbl{font-size:10px;font-weight:600;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.8px;padding:8px 8px 4px;margin-top:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:400;color:rgba(255,255,255,.5);transition:all .15s}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:#210DFF;color:#fff;font-weight:700}
+.nav-item .ico{font-size:14px;width:18px;text-align:center}
+.sb-footer{padding:14px 12px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.22)}
+
+/* TOPBAR */
+.main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-title{font-size:15px;font-weight:600}
+.tb-chip{font-size:11px;color:var(--text2);background:var(--surface2);padding:3px 10px;border-radius:20px}
+.tb-right{display:flex;align-items:center;gap:8px}
+.up-btn{display:flex;align-items:center;gap:5px;padding:6px 11px;border-radius:7px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .15s}
+.up-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.ai-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:#210DFF;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.ai-btn:hover{background:#1A00CC}
+.ai-btn:disabled{opacity:.6;cursor:not-allowed}
+input[type=file]{display:none}
+
+/* CONTENT */
+.content{padding:26px 28px;flex:1}
+.tab-sec{display:none}.tab-sec.active{display:block}
+
+/* CARDS */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh)}
+.card-hd{padding:16px 20px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.5px}
+.card-sub{font-size:11px;color:var(--text3)}
+.card-src{font-size:10px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:12px;font-style:italic}
+.card-bd{padding:20px}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.span2{grid-column:span 2}
+.mb{margin-bottom:18px}
+
+/* INDEX */
+.idx-hero{background:linear-gradient(135deg,#210DFF 0%,#00214D 100%);border-radius:var(--r);padding:26px 30px;margin-bottom:22px;color:#fff}
+.idx-hero h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
+.idx-hero p{font-size:13px;opacity:.65}
+.idx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.idx-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
+.idx-card:hover{border-color:var(--accent);box-shadow:var(--sh-md);transform:translateY(-1px)}
+.idx-card-ico{font-size:22px;margin-bottom:10px}
+.idx-card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.idx-card-desc{font-size:12px;color:var(--text3);line-height:1.5}
+
+/* TERMOSTATO */
+.thermo-layout{display:grid;grid-template-columns:280px 1fr;gap:20px}
+.thermo-left{display:flex;flex-direction:column;align-items:center;gap:14px;padding:24px 20px}
+.thermo-cpv{font-size:52px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:-2px;line-height:1;text-align:center}
+.thermo-label{font-size:13px;font-weight:500;text-align:center}
+.thermo-prev{font-size:12px;color:var(--text3);text-align:center}
+.thermo-badge{display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:30px;font-size:13px;font-weight:600}
+.badge-dot{width:8px;height:8px;border-radius:50%}
+
+/* Termometer bar */
+.thermo-bar-wrap{width:40px;height:200px;position:relative;border-radius:20px;overflow:hidden;background:#E4E7EC}
+.thermo-bar-fill{position:absolute;bottom:0;width:100%;border-radius:20px;transition:height .5s}
+.thermo-bar-zones{position:absolute;top:0;left:52px;height:200px;display:flex;flex-direction:column;justify-content:space-between;font-size:10px;font-family:'DM Mono',monospace}
+.zone-row{display:flex;align-items:center;gap:6px}
+.zone-dot{width:8px;height:8px;border-radius:50%}
+
+/* Thermo right: questions grid */
+.thermo-qs{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px}
+.thermo-q{background:var(--surface2);border-radius:10px;padding:14px 16px}
+.thermo-q h4{font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px}
+.thermo-q p{font-size:12px;color:var(--text2);line-height:1.55}
+.thermo-note{font-size:11px;color:var(--text3);font-style:italic;padding:10px 20px 16px;border-top:1px solid var(--border)}
+
+/* EMBUDO TABLE */
+.emb-table{width:100%;border-collapse:collapse;font-size:13px}
+.emb-table th{padding:10px 14px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--border);background:var(--surface2)}
+.emb-table th:first-child{text-align:left}
+.emb-table th:not(:first-child){text-align:right}
+.emb-table td{padding:11px 14px;border-bottom:1px solid var(--border);text-align:right;font-size:13px}
+.emb-table td:first-child{text-align:left;font-weight:500}
+.emb-table tr:last-child td{border-bottom:none}
+.emb-table tr.sec-row td{background:var(--surface2);font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:7px 14px}
+.mono{font-family:'DM Mono',monospace}
+.diff-pos{color:var(--green);font-weight:600;font-family:'DM Mono',monospace}
+.diff-neg{color:var(--red);font-weight:600;font-family:'DM Mono',monospace}
+.diff-neu{color:var(--text3);font-family:'DM Mono',monospace}
+.highlight-max{background:#FEF3F2}
+.highlight-max td{font-weight:700}
+
+/* SIGNAL TABLE */
+.sig-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.sig-table th{padding:9px 12px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--border);background:var(--surface2);text-align:center}
+.sig-table th:first-child{text-align:left}
+.sig-table td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:center;font-family:'DM Mono',monospace;font-size:12px}
+.sig-table td:first-child{text-align:left;font-family:'Nunito',sans-serif;font-weight:500;font-size:13px}
+.sig-table tr:last-child td{border-bottom:none}
+.sig-table .obj-row td{font-size:11px;color:var(--text3);font-style:italic;font-family:'Nunito',sans-serif}
+.sig-table .obj-row td:first-child{font-style:normal;font-weight:500}
+.cell-g{color:var(--green);font-weight:700}
+.cell-r{color:var(--red);font-weight:700}
+.cell-y{color:var(--yellow);font-weight:700}
+.bit-tag{display:inline-block;font-size:9px;background:rgba(10,95,255,.1);color:var(--accent);border-radius:3px;padding:1px 5px;font-family:'Nunito';font-weight:600;vertical-align:middle;margin-left:4px}
+
+/* ALERTS */
+.alert-list{display:flex;flex-direction:column;gap:8px}
+.alert-item{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.45}
+.alert-item.g{background:var(--green-bg);color:#065F46}
+.alert-item.r{background:var(--red-bg);color:#991B1B}
+.alert-item.y{background:var(--yellow-bg);color:#92400E}
+.alert-ico{font-size:13px;margin-top:1px;flex-shrink:0}
+
+/* BITÁCORA */
+.bit-list{display:flex;flex-direction:column;gap:10px}
+.bit-item{display:flex;gap:14px;padding:13px 16px;background:var(--surface2);border-radius:10px;border-left:3px solid var(--border)}
+.bit-date{font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);min-width:44px;margin-top:2px}
+.bit-body{flex:1}
+.bit-area{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:1px 7px;border-radius:20px;margin-bottom:4px}
+.bit-desc{font-size:13px;font-weight:500;line-height:1.4}
+.bit-motivo{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.4}
+.bit-estado{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;float:right;margin-top:2px}
+.bit-activo{background:var(--green-bg);color:var(--green)}
+
+/* ESSENTIALS */
+.ess-block{margin-bottom:16px}
+.ess-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--surface2);border-radius:8px 8px 0 0;border:1px solid var(--border)}
+.ess-name{font-size:12px;font-weight:600}
+.ess-pct{font-family:'DM Mono',monospace;font-size:14px;font-weight:700}
+.ess-rows{border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;overflow:hidden}
+.ess-row{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.ess-row:last-child{border-bottom:none}
+.ess-row-lbl{color:var(--text2)}
+.ess-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:600}
+
+/* CHAT / ANALYSIS */
+.chat-wrap{display:flex;flex-direction:column;height:420px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--surface2)}
+.msg{max-width:85%;padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.55}
+.msg.user{background:#210DFF;color:#fff;align-self:flex-end;border-radius:10px 10px 3px 10px}
+.msg.ai{background:#fff;color:var(--text);border:1px solid var(--border);align-self:flex-start;border-radius:10px 10px 10px 3px}
+.msg.ai.loading{color:var(--text3);font-style:italic;display:flex;align-items:center;gap:8px}
+.spinner{width:14px;height:14px;border:2px solid rgba(10,95,255,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.chat-input-row{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--border);background:#fff}
+.chat-input{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:inherit;font-size:13px;outline:none;transition:border .15s}
+.chat-input:focus{border-color:var(--accent)}
+.chat-send{padding:8px 14px;border-radius:8px;background:#210DFF;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.chat-send:disabled{opacity:.5;cursor:not-allowed}
+.conclusion-area{margin-top:14px}
+.conclusion-lbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.conclusion-box{background:var(--accent-light);border:1px solid rgba(10,95,255,.15);border-radius:10px;padding:16px;font-size:13.5px;line-height:1.7;color:var(--text);min-height:60px;white-space:pre-wrap}
+.conclusion-box.placeholder{color:var(--text3);font-style:italic}
+.save-btn{margin-top:10px;padding:7px 16px;border-radius:8px;border:1px solid var(--accent);background:#fff;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.save-btn:hover{background:#210DFF;color:#fff}
+
+/* PLAN */
+.plan-ta{width:100%;min-height:140px;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-family:'Nunito',sans-serif;font-size:13px;line-height:1.6;color:var(--text);resize:vertical;outline:none;transition:border .15s}
+.plan-ta:focus{border-color:var(--accent)}
+
+/* PROGRESO bar */
+.prog-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.prog-row:last-child{border-bottom:none}
+.prog-lbl{width:130px;font-size:13px;font-weight:500;flex-shrink:0}
+.prog-bar-wrap{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.prog-bar{height:100%;border-radius:4px;transition:width .4s}
+.prog-vals{font-size:12px;font-family:'DM Mono',monospace;color:var(--text2);min-width:100px;text-align:right}
+
+/* INNER TABS */
+.itabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:18px}
+.itab{padding:8px 16px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.itab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.ipanel{display:none}.ipanel.active{display:block}
+
+/* CHART */
+.chart-wrap{position:relative;height:210px}
+</style>
+</head>
+<body>
+
+<nav class="sb">
+  <div class="sb-logo">
+    <svg width="110" height="32" viewBox="0 0 110 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- clienty wordmark recreation -->
+      <text x="0" y="24" font-family="Nunito,sans-serif" font-size="22" font-weight="900" fill="white" letter-spacing="-0.5">clienty</text>
+      <!-- smile accent -->
+      <path d="M6 28 Q14 34 22 28" stroke="#210DFF" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle cx="23" cy="28" r="1.5" fill="#210DFF"/>
+    </svg>
+    <div class="sub" style="color:rgba(255,255,255,.4);font-size:11px;margin-top:4px">Dashboard Marketing · Q2 2026</div>
+  </div>
+  <div class="sb-nav">
+    <span class="nav-lbl">Secciones</span>
+    <div class="nav-item active" onclick="go('indice')"><span class="ico">⊞</span>Índice</div>
+    <div class="nav-item" onclick="go('termostato')"><span class="ico">◉</span>Termostato CPV</div>
+    <div class="nav-item" onclick="go('embudo')"><span class="ico">▽</span>Embudo del Mes</div>
+    <div class="nav-item" onclick="go('senales')"><span class="ico">⚡</span>Señales Tempranas</div>
+    <div class="nav-item" onclick="go('essentials')"><span class="ico">✓</span>Essentials</div>
+    <div class="nav-item" onclick="go('bitacora')"><span class="ico">📋</span>Bitácora</div>
+    <div class="nav-item" onclick="go('plan')"><span class="ico">→</span>Plan de Acción</div>
+  </div>
+  <div class="sb-footer">Sem 17 · 20/04–26/04 · Abr 2026</div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-left">
+      <span class="tb-title" id="tb-title">Índice</span>
+      <span class="tb-chip" id="tb-chip">Sem 17 · Q2 2026</span>
+    </div>
+    <div class="tb-right">
+      <input type="file" id="f-t90" accept=".csv">
+      <input type="file" id="f-rvso" accept=".csv">
+      <input type="file" id="f-tablero" accept=".csv">
+      <input type="file" id="f-essentials" accept=".csv">
+      <input type="file" id="f-bitacora" accept=".csv">
+      <input type="file" id="f-jotform" accept=".csv">
+      <button class="up-btn" onclick="document.getElementById('f-t90').click()">↑ T90 mkt</button>
+      <button class="up-btn" onclick="document.getElementById('f-rvso').click()">↑ Real vs Obj</button>
+      <button class="up-btn" onclick="document.getElementById('f-tablero').click()">↑ Tablero</button>
+      <button class="up-btn" onclick="document.getElementById('f-essentials').click()">↑ Essentials</button>
+      <button class="up-btn" onclick="document.getElementById('f-bitacora').click()">↑ Bitácora</button>
+      <button class="up-btn" onclick="document.getElementById('f-jotform').click()">↑ JotForm</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ÍNDICE -->
+    <div id="tab-indice" class="tab-sec active">
+      <div class="idx-hero">
+        <h1>Reporte Quincenal · Marketing &amp; Ventas</h1>
+        <p>Q2 2026 · Semana 17 · 20/04 al 26/04 · Clienty</p>
+      </div>
+      <div class="idx-grid">
+        <div class="idx-card" onclick="go('termostato')">
+          <div class="idx-card-ico">◉</div>
+          <div class="idx-card-title">Termostato CPV</div>
+          <div class="idx-card-desc">¿Está sano el embudo de adquisición? ¿Cómo está funcionando el costo por venta?</div>
+        </div>
+        <div class="idx-card" onclick="go('embudo')">
+          <div class="idx-card-ico">▽</div>
+          <div class="idx-card-title">Embudo del Mes</div>
+          <div class="idx-card-desc">Mes anterior vs real vs proyectado. Absolutos y ratios de conversión con diferencias marcadas.</div>
+        </div>
+        <div class="idx-card" onclick="go('senales')">
+          <div class="idx-card-ico">⚡</div>
+          <div class="idx-card-title">Señales Tempranas</div>
+          <div class="idx-card-desc">Inversión, leads, CPL y CPL GF semana a semana. Tendencias y alertas automáticas.</div>
+        </div>
+        <div class="idx-card" onclick="go('essentials')">
+          <div class="idx-card-ico">✓</div>
+          <div class="idx-card-title">Essentials</div>
+          <div class="idx-card-desc">Cumplimiento semanal de procesos y métricas operativas del equipo.</div>
+        </div>
+        <div class="idx-card" onclick="go('bitacora')">
+          <div class="idx-card-ico">📋</div>
+          <div class="idx-card-title">Bitácora</div>
+          <div class="idx-card-desc">Historial de cambios, hipótesis y resultados observados.</div>
+        </div>
+        <div class="idx-card" onclick="go('plan')">
+          <div class="idx-card-ico">→</div>
+          <div class="idx-card-title">Plan de Acción</div>
+          <div class="idx-card-desc">Próximos pasos, foco de la semana y sugerencias de IA.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TERMOSTATO -->
+    <div id="tab-termostato" class="tab-sec">
+      <div class="card mb">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Termostato CPV</div>
+            <div class="card-sub">Inversión en ads ÷ ventas reales del mes · Referencia: costo de implementación + fee primer mes ≈ $1.800</div>
+          </div>
+          <span class="card-src">Fuente: T90 + Real vs Obj</span>
+        </div>
+        <div class="thermo-layout">
+          <!-- Left: gauge -->
+          <div class="thermo-left" style="border-right:1px solid var(--border)">
+            <div style="font-size:12px;color:var(--text3);text-align:center" id="th-mes-label">CPV Real · Abr 2026</div>
+            <div class="thermo-cpv" id="th-cpv">—</div>
+            <div class="thermo-badge" id="th-badge">
+              <div class="badge-dot" id="th-dot"></div>
+              <span id="th-status">—</span>
+            </div>
+            <div style="display:flex;gap:16px;align-items:flex-start;margin-top:8px">
+              <div class="thermo-bar-wrap" id="th-bar-wrap">
+                <div class="thermo-bar-fill" id="th-bar"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:0;height:200px;justify-content:flex-start;padding-top:4px">
+                <div style="font-size:10px;color:#FF6242;font-weight:700;font-family:'DM Mono',monospace">RIESGO</div>
+                <div style="font-size:9px;color:#FF6242;font-family:'DM Mono',monospace;margin-bottom:28px">&gt;$2.700</div>
+                <div style="font-size:10px;color:#FFDB09;font-weight:700;font-family:'DM Mono',monospace">RECUPERABLE</div>
+                <div style="font-size:9px;color:#FFDB09;font-family:'DM Mono',monospace;margin-bottom:28px">$1.800–$2.700</div>
+                <div style="font-size:10px;color:#00CBF6;font-weight:700;font-family:'DM Mono',monospace">RENTABLE</div>
+                <div style="font-size:9px;color:#00CBF6;font-family:'DM Mono',monospace;margin-bottom:28px">$1.260–$1.800</div>
+                <div style="font-size:10px;color:#00E3AA;font-weight:700;font-family:'DM Mono',monospace">IDEAL</div>
+                <div style="font-size:9px;color:#00E3AA;font-family:'DM Mono',monospace">≤$1.260</div>
+              </div>
+            </div>
+            <div id="th-prev" style="font-size:12px;color:var(--text3);text-align:center"></div>
+          </div>
+          <!-- Right: questions -->
+          <div>
+            <div class="thermo-qs">
+              <div class="thermo-q">
+                <h4>¿Por qué $1.800 es el límite?</h4>
+                <p>Implementación (~$1.500) + fee primer mes (~$300). Por debajo de ese número, el ingreso del primer mes ya cubre el CPV y el modelo escala con liquidez. El ideal es CPV ≤ 70% del costo de implementación (~$1.050), dejando margen operativo.</p>
+              </div>
+              <div class="thermo-q">
+                <h4>¿Por qué no está en rojo?</h4>
+                <p>A $2.262, el retorno se da a los 3 meses. Igual que el modelo anterior (CPV $500 + recurrente $230 ≈ mismo recupero). La diferencia: con el sistema actual entregamos más valor, por lo que la hipótesis es que el LTV mejora y esos 3 meses se vuelven más rentables. Nota: el CPV reportado es solo publicidad directa — el CAC total (incluyendo otros costos operativos) es algo mayor.</p>
+              </div>
+              <div class="thermo-q">
+                <h4>¿Cuándo es zona roja?</h4>
+                <p>Cuando supera los ~$2.700. Ahí el recupero pasa los 3 meses.</p>
+              </div>
+              <div class="thermo-q" style="background:var(--surface)">
+                <h4>Comparativa</h4>
+                <div id="th-comparativa" style="font-size:12px;color:var(--text2);line-height:1.6"></div>
+              </div>
+            </div>
+            <div class="thermo-note">CPV = costo de publicidad directa ÷ ventas reales del mes. CAC total incluye otros costos operativos y es algo mayor al CPV reportado.</div>
+          </div>
+        </div>
+      </div>
+      <!-- CHAT SECTION -->
+      <div class="g2">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Análisis con IA</div><span class="card-sub">Chateá, profundizá y guardá la conclusión</span></div>
+          <div class="card-bd" style="padding:14px">
+            <div class="chat-wrap" id="chat-termostato">
+              <div class="chat-msgs" id="msgs-termostato"></div>
+              <div class="chat-input-row">
+                <input class="chat-input" id="inp-termostato" placeholder="Preguntá sobre el CPV..." onkeydown="if(event.key==='Enter')sendChat('termostato')">
+                <button class="chat-send" onclick="sendChat('termostato')">→</button>
+              </div>
+            </div>
+            <div class="conclusion-area">
+              <div class="conclusion-lbl">Conclusión guardada</div>
+              <div class="conclusion-box placeholder" id="concl-termostato">Sin conclusión guardada. Chateá y guardá lo que querés mostrar.</div>
+              <button class="save-btn" onclick="saveConclusion('termostato')">Guardar última respuesta como conclusión</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Datos de referencia</div></div>
+          <div class="card-bd">
+            <table class="emb-table">
+              <thead><tr><th>Métrica</th><th>Valor</th></tr></thead>
+              <tbody id="th-ref-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMBUDO -->
+    <div id="tab-embudo" class="tab-sec">
+      <div class="itabs">
+        <div class="itab active" onclick="switchInner(this,'emb-cierre')">Cierre del Mes</div>
+        <div class="itab" onclick="switchInner(this,'emb-progreso')">Progreso en Curso</div>
+      </div>
+      <div id="emb-cierre" class="ipanel active">
+        <div class="card mb">
+          <div class="card-hd">
+            <div>
+              <div class="card-title">Embudo · Mes anterior vs Real vs Proyectado</div>
+              <div class="card-sub" id="emb-mes-label">Comparando Marzo vs Abril 2026 · Diferencia en puntos porcentuales (ratios)</div>
+            </div>
+            <span class="card-src">Fuente: T90 + Real vs Obj</span>
+          </div>
+          <div style="padding:0">
+            <table class="emb-table" id="emb-table">
+              <thead>
+                <tr>
+                  <th>Métrica</th>
+                  <th>Mes ant. (Mar)</th>
+                  <th>Real (Abr)</th>
+                  <th>Proyectado</th>
+                  <th>vs Proy</th>
+                </tr>
+              </thead>
+              <tbody id="emb-tbody">
+                <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">Cargando datos...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Análisis con IA</div><span class="card-sub">Chateá sobre el embudo</span></div>
+            <div class="card-bd" style="padding:14px">
+              <div class="chat-wrap">
+                <div class="chat-msgs" id="msgs-embudo"></div>
+                <div class="chat-input-row">
+                  <input class="chat-input" id="inp-embudo" placeholder="¿Qué querés profundizar del embudo?" onkeydown="if(event.key==='Enter')sendChat('embudo')">
+                  <button class="chat-send" onclick="sendChat('embudo')">→</button>
+                </div>
+              </div>
+              <div class="conclusion-area">
+                <div class="conclusion-lbl">Conclusión guardada</div>
+                <div class="conclusion-box placeholder" id="concl-embudo">Sin conclusión guardada.</div>
+                <button class="save-btn" onclick="saveConclusion('embudo')">Guardar como conclusión</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><div class="card-title">Diferencias destacadas</div></div>
+            <div class="card-bd">
+              <div class="alert-list" id="emb-alerts"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="emb-progreso" class="ipanel">
+        <div class="card mb">
+          <div class="card-hd">
+            <div>
+              <div class="card-title">Progreso del Mes en Curso vs Objetivo</div>
+              <div class="card-sub">Acumulado hasta hoy proyectado al cierre del mes</div>
+            </div>
+            <span class="card-src">Fuente: T90 semanas del mes</span>
+          </div>
+          <div class="card-bd" id="progreso-content">
+            <div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">Cargando proyección...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÑALES TEMPRANAS -->
+    <div id="tab-senales" class="tab-sec">
+      <div class="card mb">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Señales Tempranas — Sems 12 a 16</div>
+            <div class="card-sub">Inversión · Leads · CPL · CPL GF · % GF · Objetivo CPL del mes</div>
+          </div>
+          <span class="card-src">Fuente: Tablero Resumen</span>
+        </div>
+        <div style="padding:0;overflow-x:auto">
+          <table class="sig-table" id="sig-table">
+            <thead>
+              <tr>
+                <th>Métrica</th>
+                <th>Sem 12<br><span style="font-weight:400;font-style:italic">16–22/3</span></th>
+                <th>Sem 13<br><span style="font-weight:400;font-style:italic">23–29/3</span></th>
+                <th>Sem 14<br><span style="font-weight:400;font-style:italic">30/3–5/4</span></th>
+                <th>Sem 15<br><span style="font-weight:400;font-style:italic">6–12/4</span></th>
+                <th>Sem 16<br><span style="font-weight:400;font-style:italic">13–19/4</span></th>
+                <th>Sem 17<br><span style="font-weight:400;font-style:italic">20–26/4</span></th>
+              </tr>
+            </thead>
+            <tbody id="sig-tbody">
+              <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:30px">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="g2 mb">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Tendencia CPL y CPL GF</div><span class="card-src">Tablero Resumen</span></div>
+          <div class="card-bd"><div class="chart-wrap"><canvas id="sig-chart"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Alertas automáticas</div></div>
+          <div class="card-bd"><div class="alert-list" id="sig-alerts"><div style="color:var(--text3);font-size:13px">Sin datos.</div></div></div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Análisis con IA</div><span class="card-sub">Chateá sobre las señales</span></div>
+          <div class="card-bd" style="padding:14px">
+            <div class="chat-wrap">
+              <div class="chat-msgs" id="msgs-senales"></div>
+              <div class="chat-input-row">
+                <input class="chat-input" id="inp-senales" placeholder="¿Alguna tendencia que querés analizar?" onkeydown="if(event.key==='Enter')sendChat('senales')">
+                <button class="chat-send" onclick="sendChat('senales')">→</button>
+              </div>
+            </div>
+            <div class="conclusion-area">
+              <div class="conclusion-lbl">Conclusión guardada</div>
+              <div class="conclusion-box placeholder" id="concl-senales">Sin conclusión guardada.</div>
+              <button class="save-btn" onclick="saveConclusion('senales')">Guardar como conclusión</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Eventos de bitácora en el período</div><span class="card-src">Bitácora</span></div>
+          <div class="card-bd"><div class="bit-list" id="sig-bitacora"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESSENTIALS -->
+    <div id="tab-essentials" class="tab-sec">
+      <div class="g2">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Tracking Essentials</div><span class="card-src">Tracking Essentials</span></div>
+          <div class="card-bd" id="ess-content"><div style="color:var(--text3);text-align:center;padding:30px">Cargando...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Resumen</div></div>
+          <div class="card-bd" id="ess-summary"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BITÁCORA -->
+    <div id="tab-bitacora" class="tab-sec">
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-title">Bitácora de Cambios</div><div class="card-sub">Historial cronológico de acciones e hipótesis</div></div>
+          <span class="card-src">Fuente: Bitácora Mkt</span>
+        </div>
+        <div class="card-bd"><div class="bit-list" id="bit-list"><div style="color:var(--text3);text-align:center;padding:30px">Cargando...</div></div></div>
+      </div>
+    </div>
+
+    <!-- PLAN DE ACCIÓN -->
+    <div id="tab-plan" class="tab-sec">
+      <div class="g2">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Plan de Acción · Semana siguiente</div></div>
+          <div class="card-bd">
+            <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Marketing / Ads</div>
+            <textarea class="plan-ta" id="plan-mkt" placeholder="• Próximos pasos en ads&#10;• Cambios creativos&#10;• Tests programados"></textarea>
+            <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">Embudo / Proceso</div>
+            <textarea class="plan-ta" id="plan-emb" placeholder="• Acciones sobre R1/R2&#10;• Seguimiento pendiente&#10;• Cambios de proceso"></textarea>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Sugerencias IA</div><span class="card-sub">Basado en todos los datos cargados</span></div>
+          <div class="card-bd" style="padding:14px">
+            <div class="chat-wrap">
+              <div class="chat-msgs" id="msgs-plan"></div>
+              <div class="chat-input-row">
+                <input class="chat-input" id="inp-plan" placeholder="¿Qué querés priorizar la próxima semana?" onkeydown="if(event.key==='Enter')sendChat('plan')">
+                <button class="chat-send" onclick="sendChat('plan')">→</button>
+              </div>
+            </div>
+            <div class="conclusion-area">
+              <div class="conclusion-lbl">Plan IA guardado</div>
+              <div class="conclusion-box placeholder" id="concl-plan">Sin plan guardado.</div>
+              <button class="save-btn" onclick="saveConclusion('plan')">Guardar como plan IA</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════ STATE ═══════════════════════
+const S = { t90:null, rvso:null, tablero:null, essentials:null, bitacora:null, jotform:null };
+const chatHistory = { termostato:[], embudo:[], senales:[], plan:[] };
+const savedConclusions = { termostato:null, embudo:null, senales:null, plan:null };
+let lastAiMsg = { termostato:'', embudo:'', senales:'', plan:'' };
+let sigChart = null;
+
+// ═══════════════════════ NAV ═══════════════════════
+const titles = { indice:'Índice', termostato:'Termostato CPV', embudo:'Embudo del Mes', senales:'Señales Tempranas', essentials:'Essentials', bitacora:'Bitácora', plan:'Plan de Acción' };
+function go(name) {
+  document.querySelectorAll('.tab-sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{ if(n.getAttribute('onclick')?.includes(name)) n.classList.add('active'); });
+  document.getElementById('tb-title').textContent = titles[name]||name;
+}
+function switchInner(el, panelId) {
+  el.closest('.tab-sec').querySelectorAll('.itab').forEach(t=>t.classList.remove('active'));
+  el.closest('.tab-sec').querySelectorAll('.ipanel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ═══════════════════════ FILE UPLOADS ═══════════════════════
+function setupUpload(id, key, cb) {
+  document.getElementById(id).addEventListener('change', e => {
+    Papa.parse(e.target.files[0], { complete: r => { S[key] = r.data; if(cb) cb(); else renderAll(); } });
+  });
+}
+setupUpload('f-t90','t90',renderAll);
+setupUpload('f-rvso','rvso',renderAll);
+setupUpload('f-tablero','tablero',()=>{ renderSenales(); renderBitacoraInSenales(); });
+setupUpload('f-essentials','essentials',renderEssentials);
+setupUpload('f-bitacora','bitacora',()=>{ renderBitacora(); renderBitacoraInSenales(); });
+setupUpload('f-jotform','jotform',renderAll);
+
+// ═══════════════════════ HELPERS ═══════════════════════
+function pn(s) {
+  if(!s||s==='nan'||s==='-'||s==='') return null;
+  return parseFloat(s.toString().replace(/\$|\s/g,'').replace(/\.(?=\d{3})/g,'').replace(',','.'));
+}
+function usd(n){ if(n===null||isNaN(n)) return '—'; return '$'+Math.round(n).toLocaleString('es-AR'); }
+function pct(n){ if(n===null||isNaN(n)) return '—'; return n.toFixed(1).replace('.',',')+' %'; }
+function pctPts(a,b){ if(a===null||b===null) return null; return a-b; }
+function diffSign(n){ return n>0?'+':''; }
+function findRow(data, label) { return data?.find(r => r[1]&&r[1].toString().trim().toLowerCase().includes(label.toLowerCase())); }
+
+// ═══════════════════════ RVSO PARSER ═══════════════════════
+function getRvsO() {
+  const d = S.rvso; if(!d) return null;
+  const get = (row,ri,pi) => row ? {real:pn(row[ri]),proy:pn(row[pi])} : {real:null,proy:null};
+  const inv=findRow(d,'Inversión publicidad'), leads=findRow(d,'Leads'), r1=findRow(d,'R1 Efectivas');
+  const presu=findRow(d,'Presupuestos'), ventas=findRow(d,'Ventas reales'), cpl=findRow(d,'CPL');
+  const cpv=findRow(d,'CPV (Inversion'), tcierre=findRow(d,'Tasa de cierre');
+  const mk=(ri,pi)=>({ inv:get(inv,ri,pi), leads:get(leads,ri,pi), r1:get(r1,ri,pi),
+    presu:get(presu,ri,pi), ventas:get(ventas,ri,pi), cpl:get(cpl,ri,pi),
+    cpv:get(cpv,ri,pi), tcierre:get(tcierre,ri,pi) });
+  return { ene:mk(3,4), feb:mk(6,7), mar:mk(9,10), abr:mk(12,13) };
+}
+
+// ═══════════════════════ RENDER ALL ═══════════════════════
+function renderAll() {
+  renderTermostato();
+  renderEmbudo();
+  renderSenales();
+  renderProgreso();
+}
+
+// ═══════════════════════ TERMOSTATO ═══════════════════════
+function renderTermostato() {
+  const rv = getRvsO();
+  if(!rv) return;
+  const cpv = rv.abr.cpv.real, cpvPrev = rv.mar.cpv.real, cpvObj = rv.abr.cpv.proy;
+  const ventas = rv.abr.ventas.real, ventasPrev = rv.mar.ventas.real;
+
+  document.getElementById('th-cpv').textContent = usd(cpv);
+
+  // Zone logic: IDEAL ≤1260 | RENTABLE 1260-1800 | RECUPERABLE 1800-2700 | RIESGO >2700
+  let zone, color, bgColor, statusText;
+  const v = cpv || 0;
+  if(v <= 1260) { zone='IDEAL'; color='#00E3AA'; bgColor='#E0FBF5'; statusText='✓ Zona ideal'; }
+  else if(v <= 1800) { zone='RENTABLE'; color='#00CBF6'; bgColor='#E0F8FF'; statusText='Zona rentable'; }
+  else if(v <= 2700) { zone='RECUPERABLE'; color='#FFDB09'; bgColor='#FFFDE5'; statusText='⚠ Zona recuperable'; }
+  else { zone='RIESGO'; color='#FF6242'; bgColor='#FFF0ED'; statusText='✕ Zona de riesgo'; }
+
+  document.getElementById('th-cpv').style.color = color;
+  const badge = document.getElementById('th-badge');
+  badge.style.background = bgColor; badge.style.color = color;
+  document.getElementById('th-dot').style.background = color;
+  document.getElementById('th-status').textContent = statusText + (zone ? ' · '+zone : '');
+
+  // Bar fill
+  const maxBar = 3000;
+  const fillPct = Math.min((v/maxBar)*100, 100);
+  const bar = document.getElementById('th-bar');
+  bar.style.height = fillPct+'%';
+  bar.style.background = `linear-gradient(to top, ${color}, ${color}88)`;
+
+  document.getElementById('th-prev').textContent =
+    `${cpvPrev?'Mar: '+usd(cpvPrev):''} · Proy. Abr: ${usd(cpvObj)}`;
+
+  // Comparativa
+  document.getElementById('th-comparativa').innerHTML =
+    `<b>Mes anterior:</b> ${usd(cpvPrev)}<br>` +
+    `<b>Mes actual:</b> ${usd(cpv)}<br>` +
+    `<b>Objetivo:</b> ${usd(cpvObj)}<br>` +
+    `<b>Ventas reales:</b> ${ventas??'—'}<br>` +
+    `<span style="font-size:11px;color:var(--text3)">CPV = publicidad directa. CAC total es algo mayor.</span>`;
+
+  // Ref table
+  const tbody = document.getElementById('th-ref-table');
+  const rows = [
+    ['CPV Real Abr', usd(cpv)], ['CPV Mar', usd(cpvPrev)], ['CPV Obj Abr', usd(cpvObj)],
+    ['Inversión Abr', usd(rv.abr.inv.real)], ['Ventas Abr', rv.abr.ventas.real??'—'],
+    ['CPL Real', usd(rv.abr.cpl.real)], ['CPL Obj', usd(rv.abr.cpl.proy)],
+  ];
+  tbody.innerHTML = rows.map(([l,v])=>`<tr><td>${l}</td><td class="mono" style="font-weight:600">${v}</td></tr>`).join('');
+
+  // Auto-seed chat
+  seedChat('termostato', buildContext('termostato'));
+}
+
+// ═══════════════════════ EMBUDO ═══════════════════════
+function renderEmbudo() {
+  const rv = getRvsO(); if(!rv) return;
+  const { mar, abr } = rv;
+
+  const metrics = [
+    { label:'Inversión', prevR:mar.inv.real, realR:abr.inv.real, proyR:abr.inv.proy, fmt:usd, isUSD:true, invertDelta:false },
+    { label:'Leads', prevR:mar.leads.real, realR:abr.leads.real, proyR:abr.leads.proy, fmt:v=>v??'—', isCount:true },
+    { label:'R1 Efectivas', prevR:mar.r1.real, realR:abr.r1.real, proyR:abr.r1.proy, fmt:v=>v??'—', isCount:true },
+    { label:'Presupuestos', prevR:mar.presu.real, realR:abr.presu.real, proyR:abr.presu.proy, fmt:v=>v??'—', isCount:true },
+    { label:'Ventas Reales', prevR:mar.ventas.real, realR:abr.ventas.real, proyR:abr.ventas.proy, fmt:v=>v??'—', isCount:true },
+    { label:'CPL', prevR:mar.cpl.real, realR:abr.cpl.real, proyR:abr.cpl.proy, fmt:usd, isUSD:true, invertDelta:true },
+    { label:'CPV', prevR:mar.cpv.real, realR:abr.cpv.real, proyR:abr.cpv.proy, fmt:usd, isUSD:true, invertDelta:true },
+  ];
+
+  const ratioMetrics = [
+    { label:'R1 / Leads', prevN:mar.r1.real, prevD:mar.leads.real, realN:abr.r1.real, realD:abr.leads.real, proyN:abr.r1.proy, proyD:abr.leads.proy },
+    { label:'Presu / R1', prevN:mar.presu.real, prevD:mar.r1.real, realN:abr.presu.real, realD:abr.r1.real, proyN:abr.presu.proy, proyD:abr.r1.proy },
+    { label:'Ventas / Presu', prevN:mar.ventas.real, prevD:mar.presu.real, realN:abr.ventas.real, realD:abr.presu.real, proyN:abr.ventas.proy, proyD:abr.presu.proy },
+    { label:'Ventas / Leads', prevN:mar.ventas.real, prevD:mar.leads.real, realN:abr.ventas.real, realD:abr.leads.real, proyN:abr.ventas.proy, proyD:abr.leads.proy },
+  ];
+
+  function r(n,d){ return (n&&d&&d>0)?(n/d)*100:null; }
+
+  let html = '';
+  // Absolute rows
+  html += `<tr class="sec-row"><td colspan="5">Absolutos</td></tr>`;
+  metrics.forEach(m => {
+    const diff = (m.realR!==null&&m.proyR!==null) ? m.realR - m.proyR : null;
+    const isGood = m.invertDelta ? diff<=0 : diff>=0;
+    const bigDiff = diff!==null && Math.abs(diff/Math.max(m.proyR,1)) > 0.15;
+    const diffHtml = diff!==null
+      ? `<span class="${isGood?'diff-pos':'diff-neg'}">${diffSign(diff)}${m.isUSD?usd(diff):Math.round(diff)}</span>`
+      : '—';
+    html += `<tr${bigDiff&&!isGood?' class="highlight-max"':''}>
+      <td>${m.label}${bigDiff&&!isGood?' <span style="color:var(--red);font-size:11px">↑</span>':''}</td>
+      <td class="mono">${m.fmt(m.prevR)}</td>
+      <td class="mono" style="font-weight:600">${m.fmt(m.realR)}</td>
+      <td class="mono">${m.fmt(m.proyR)}</td>
+      <td>${diffHtml}</td>
+    </tr>`;
+  });
+
+  // Ratio rows
+  html += `<tr class="sec-row"><td colspan="5">Ratios de Conversión</td></tr>`;
+  ratioMetrics.forEach(m => {
+    const prev = r(m.prevN,m.prevD), real = r(m.realN,m.realD), proy = r(m.proyN,m.proyD);
+    const diff = (real!==null&&proy!==null) ? real-proy : null;
+    const bigDiff = diff!==null && Math.abs(diff) > 5;
+    const diffHtml = diff!==null
+      ? `<span class="${diff>=0?'diff-pos':'diff-neg'}">${diffSign(diff)}${diff.toFixed(1)}pp</span>`
+      : '—';
+    html += `<tr${bigDiff&&diff<0?' class="highlight-max"':''}>
+      <td>${m.label}</td>
+      <td class="mono">${pct(prev)}</td>
+      <td class="mono" style="font-weight:600">${pct(real)}</td>
+      <td class="mono">${pct(proy)}</td>
+      <td>${diffHtml}</td>
+    </tr>`;
+  });
+
+  document.getElementById('emb-tbody').innerHTML = html;
+
+  // Alerts
+  const alerts = [];
+  metrics.concat([]).forEach(m => {
+    if(m.realR!==null&&m.proyR!==null) {
+      const diff = m.realR - m.proyR;
+      const pctOff = Math.abs(diff/Math.max(m.proyR,1))*100;
+      if(pctOff > 15) {
+        const isGood = m.invertDelta ? diff<=0 : diff>=0;
+        alerts.push({ type: isGood?'g':'r', text:`${m.label}: ${m.fmt(m.realR)} vs obj ${m.fmt(m.proyR)} (${diffSign(diff)}${Math.round(pctOff)}%)` });
+      }
+    }
+  });
+  const embAlerts = document.getElementById('emb-alerts');
+  embAlerts.innerHTML = alerts.length
+    ? alerts.map(a=>`<div class="alert-item ${a.type}"><span class="alert-ico">${a.type==='g'?'↑':'↓'}</span><span>${a.text}</span></div>`).join('')
+    : '<div style="color:var(--text3);font-size:13px">Sin diferencias significativas.</div>';
+
+  seedChat('embudo', buildContext('embudo'));
+}
+
+// ═══════════════════════ SEÑALES TEMPRANAS ═══════════════════════
+function renderSenales() {
+  const data = S.tablero; if(!data) return;
+  const CPL_OBJ = { 12:70, 13:70, 14:70, 15:70, 16:70, 17:74 };
+  const CPL_GF_REF = 150;
+  const GF_PCT_OK_LOW = 40, GF_PCT_OK_HIGH = 50;
+
+  const weekly = [];
+  for(const row of data) {
+    const v = String(row[0]||'').trim();
+    if(/^\d+$/.test(v) && parseInt(v)>=12 && parseInt(v)<=16) {
+      weekly.push({
+        sem: parseInt(v), fi: row[1], ff: row[2],
+        leads: pn(row[3]), inv: pn(row[16]), cpl: pn(row[17]),
+        gf: pn(row[23]), bf: pn(row[24]), pctGF: parseFloat((row[28]||'').replace('%',''))||null,
+        cplGF: pn(row[30])
+      });
+    }
+  }
+
+  const tbody = document.getElementById('sig-tbody');
+  const metricRows = [
+    { label:'Inversión', key:'inv', fmt:usd, higherBetter:false, neutral:true },
+    { label:'Leads', key:'leads', fmt:v=>v??'—', higherBetter:true },
+    { label:'CPL', key:'cpl', fmt:usd, higherBetter:false, invertAlert:true },
+    { label:'CPL GF', key:'cplGF', fmt:usd, higherBetter:false, invertAlert:true, ref:CPL_GF_REF },
+    { label:'% GF', key:'pctGF', fmt:v=>v?v.toFixed(1).replace('.',',')+' %':'—', higherBetter:true, refLow:GF_PCT_OK_LOW, refHigh:GF_PCT_OK_HIGH },
+  ];
+
+  let html = '';
+  const alerts = [];
+
+  metricRows.forEach(m => {
+    html += `<tr><td>${m.label}${m.ref?` <span style="color:var(--text3);font-size:10px">(ref: ${m.ref})</span>`:''}</td>`;
+    weekly.forEach((w, i) => {
+      const v = w[m.key];
+      let cls = '';
+      // Color by reference or trend
+      if(m.key==='pctGF' && v!==null) {
+        cls = v >= m.refHigh ? 'cell-g' : v >= m.refLow ? '' : 'cell-r';
+      } else if(m.key==='cplGF' && v!==null) {
+        cls = v <= m.ref ? 'cell-g' : v <= m.ref*1.2 ? 'cell-y' : 'cell-r';
+      } else if(i>0 && v!==null && weekly[i-1][m.key]!==null) {
+        const prev = weekly[i-1][m.key];
+        const improving = m.invertAlert ? v < prev : v > prev;
+        if(i===weekly.length-1) cls = improving ? 'cell-g' : v===prev?'':'cell-r';
+      }
+      html += `<td class="${cls}">${m.fmt(v)}</td>`;
+    });
+    html += '</tr>';
+
+    // Generate alerts from last 2 weeks
+    if(weekly.length>=2) {
+      const prev = weekly[weekly.length-2][m.key];
+      const curr = weekly[weekly.length-1][m.key];
+      if(prev!==null&&curr!==null) {
+        if(m.key==='pctGF') {
+          if(curr<m.refLow) alerts.push({type:'r',text:`% GF en sem 16: ${curr.toFixed(1)}% — por debajo del mínimo (${m.refLow}%). Revisar calidad de leads.`});
+          else if(curr>=m.refHigh) alerts.push({type:'g',text:`% GF en sem 16: ${curr.toFixed(1)}% — por encima del objetivo (${m.refHigh}%). Muy bien.`});
+        }
+        if(m.key==='cpl' && curr > prev*1.15) alerts.push({type:'r',text:`CPL subió de ${usd(prev)} a ${usd(curr)} en sem 16 — revisar.`});
+        if(m.key==='leads' && curr < prev*0.8) alerts.push({type:'r',text:`Leads bajaron de ${prev} a ${curr} en sem 16 — posible bajo volumen de presupuesto.`});
+        if(m.key==='leads' && curr > prev*1.15) alerts.push({type:'g',text:`Leads subieron de ${prev} a ${curr} en sem 16 ✓`});
+      }
+    }
+  });
+
+  // Obj CPL row
+  html += `<tr class="obj-row"><td>Obj CPL del mes</td>`;
+  weekly.forEach(w => {
+    const obj = CPL_OBJ[w.sem] ?? 70;
+    html += `<td>${usd(obj)}</td>`;
+  });
+  html += '</tr>';
+
+  tbody.innerHTML = html;
+
+  // Alerts
+  document.getElementById('sig-alerts').innerHTML = alerts.length
+    ? alerts.map(a=>`<div class="alert-item ${a.type}"><span class="alert-ico">${a.type==='g'?'↑':'↓'}</span><span>${a.text}</span></div>`).join('')
+    : '<div style="color:var(--text3);font-size:13px">Sin alertas destacadas.</div>';
+
+  // Chart
+  renderSigChart(weekly);
+  renderBitacoraInSenales();
+  seedChat('senales', buildContext('senales'));
+}
+
+function renderSigChart(weekly) {
+  if(sigChart) sigChart.destroy();
+  const ctx = document.getElementById('sig-chart').getContext('2d');
+  sigChart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: weekly.map(w=>`S${w.sem}`),
+      datasets:[
+        { label:'CPL', data:weekly.map(w=>w.cpl), borderColor:'#0A5FFF', backgroundColor:'rgba(10,95,255,.07)', tension:.3, fill:true, yAxisID:'y1' },
+        { label:'CPL GF', data:weekly.map(w=>w.cplGF), borderColor:'#12B76A', backgroundColor:'transparent', tension:.3, borderDash:[5,3], yAxisID:'y1' },
+        { label:'Obj CPL', data:weekly.map(w=>70), borderColor:'#98A2B3', backgroundColor:'transparent', borderDash:[2,4], pointRadius:0, yAxisID:'y1' },
+        { label:'Ref CPL GF ($150)', data:weekly.map(()=>150), borderColor:'#12B76A', backgroundColor:'transparent', borderDash:[4,4], pointRadius:0, borderWidth:1.5, yAxisID:'y1' },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{ family:'DM Sans', size:11 }, boxWidth:12 } } },
+      scales:{
+        y1:{ position:'left', grid:{ color:'#F0F2F5' }, ticks:{ callback:v=>'$'+v, font:{size:11} } },
+        x:{ grid:{ display:false }, ticks:{ font:{size:11} } }
+      }
+    }
+  });
+}
+
+function renderBitacoraInSenales() {
+  const el = document.getElementById('sig-bitacora');
+  if(!S.bitacora) { el.innerHTML = '<div style="color:var(--text3);font-size:13px">Sin bitácora cargada.</div>'; return; }
+  // Show items from roughly March onwards (last ~15 entries)
+  const items = S.bitacora.filter((r,i)=>i>0&&r[0]).slice(-12).reverse();
+  el.innerHTML = items.map(r => bitItem(r)).join('') || '<div style="color:var(--text3);font-size:13px">Sin entradas.</div>';
+}
+
+// ═══════════════════════ PROGRESO ═══════════════════════
+function renderProgreso() {
+  const rv = getRvsO(); const t90 = S.t90; if(!rv||!t90) return;
+  // April weeks in T90: cols 35-37 (sems 15,16 - check header)
+  const header = t90[0];
+  const aprilCols = [];
+  header.forEach((h,i) => {
+    // April weeks: 6/4 and 13/4 → look for those dates in header
+    if(['6/4','13/4','20/4'].includes(h)) aprilCols.push(i);
+  });
+
+  const find = (label) => t90.find(r=>r[1]&&r[1].toString().toLowerCase().includes(label.toLowerCase()));
+  const invRow = find('Inversión publicidad'), leadsRow = find('Leads');
+  const r1Row = find('R1'), r2Row = find('R2 efectivas'), presuRow = find('Presupuestos enviados reales');
+  const vtasRow = find('Ventas totales');
+
+  const agg = (row) => aprilCols.reduce((sum, ci) => sum + (pn(row?.[ci])||0), 0);
+  const inv = agg(invRow), leads = agg(leadsRow), r1 = agg(r1Row);
+  const presu = agg(presuRow), vtas = agg(vtasRow);
+
+  const weeksInMonth = 4, weeksData = aprilCols.length;
+  const factor = weeksData > 0 ? weeksInMonth / weeksData : 1;
+  const proj = v => Math.round(v * factor);
+
+  const obj = rv.abr;
+  const bars = [
+    { lbl:'Inversión', acu:inv, proj:proj(inv), obj:obj.inv.proy, fmt:usd },
+    { lbl:'Leads', acu:leads, proj:proj(leads), obj:obj.leads.proy, fmt:v=>v??'—' },
+    { lbl:'R1', acu:r1, proj:proj(r1), obj:obj.r1.proy, fmt:v=>v??'—' },
+    { lbl:'Presupuestos', acu:presu, proj:proj(presu), obj:obj.presu.proy, fmt:v=>v??'—' },
+    { lbl:'Ventas', acu:vtas, proj:proj(vtas), obj:obj.ventas.proy, fmt:v=>v??'—' },
+  ];
+
+  let html = `<div style="font-size:12px;color:var(--text3);margin-bottom:16px;font-style:italic">
+    Acumulado ${weeksData} sem de Abril · Proyección lineal a ${weeksInMonth} sem · Objetivo del mes
+  </div>`;
+
+  bars.forEach(b => {
+    const projPct = b.obj ? Math.min((b.proj/b.obj)*100,120) : 50;
+    const acuPct = b.obj ? Math.min((b.acu/b.obj)*100,120) : 50;
+    const color = projPct>=95?'#12B76A':projPct>=75?'#F79009':'#F04438';
+    html += `<div class="prog-row">
+      <div class="prog-lbl">${b.lbl}</div>
+      <div style="flex:1">
+        <div style="display:flex;gap:4px;margin-bottom:4px">
+          <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${acuPct}%;background:${color}88;border-radius:3px"></div>
+          </div>
+          <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${projPct}%;background:${color};border-radius:3px"></div>
+          </div>
+        </div>
+        <div style="display:flex;font-size:10px;color:var(--text3)">
+          <span style="flex:1">Acumulado: ${b.fmt(b.acu)}</span>
+          <span style="flex:1">Proyectado: ${b.fmt(b.proj)}</span>
+        </div>
+      </div>
+      <div class="prog-vals">${b.fmt(b.obj)} obj · <span style="color:${color};font-weight:700">${Math.round(projPct)}%</span></div>
+    </div>`;
+  });
+
+  document.getElementById('progreso-content').innerHTML = html;
+}
+
+// ═══════════════════════ ESSENTIALS ═══════════════════════
+function renderEssentials() {
+  const data = S.essentials; if(!data) return;
+  let curSec = null, curRows = [], sections = [];
+  data.forEach(row => {
+    const lbl = (row[0]||'').toString().trim();
+    if(!lbl) return;
+    if(/^\d+\./.test(lbl)) {
+      if(curSec) sections.push({name:curSec,rows:curRows});
+      curSec=lbl; curRows=[];
+    } else { curRows.push({label:lbl, v15:row[1], v16:row[2]}); }
+  });
+  if(curSec) sections.push({name:curSec,rows:curRows});
+
+  let html='', grandTotal = null;
+  sections.forEach(sec => {
+    const totRow = sec.rows.find(r=>r.label.includes('CUMPLIMIENTO')&&r.label.includes('ESSENTIAL'));
+    const grand = sec.rows.find(r=>r.label.includes('CUMPLIMIENTO TOTAL'));
+    if(grand) { grandTotal = grand; return; }
+    const tot16 = totRow ? parseFloat((totRow.v16||'').replace('%','').replace(',','.')) : null;
+    const color = tot16===null?'var(--text3)':tot16>=95?'var(--green)':tot16>=80?'var(--yellow)':'var(--red)';
+    html += `<div class="ess-block">
+      <div class="ess-hd"><span class="ess-name">${sec.name}</span><span class="ess-pct" style="color:${color}">${tot16!==null?tot16+'%':'—'}</span></div>
+      <div class="ess-rows">`;
+    sec.rows.filter(r=>!r.label.includes('CUMPLIMIENTO')).forEach(r => {
+      const v = parseFloat((r.v16||'').replace('%','').replace(',','.'));
+      const vc = isNaN(v)?'var(--text)':v>=100?'var(--green)':v>=80?'var(--yellow)':'var(--red)';
+      html += `<div class="ess-row"><span class="ess-row-lbl">${r.label}</span>
+        <div style="display:flex;gap:16px">
+          <span style="font-size:11px;color:var(--text3)">S15: ${r.v15||'—'}${r.v15&&r.v15!=='-'?'%':''}</span>
+          <span class="ess-val" style="color:${vc}">${r.v16||'—'}${r.v16&&r.v16!=='-'&&r.v16!=='nan'?'%':''}</span>
+        </div></div>`;
+    });
+    html += `</div></div>`;
+  });
+  document.getElementById('ess-content').innerHTML = html;
+
+  if(grandTotal) {
+    const v16 = parseFloat((grandTotal.v16||'').replace('%','').replace(',','.'));
+    const avg = parseFloat((grandTotal.v15||'').replace('%','').replace(',','.'));
+    const vc = isNaN(v16)?'var(--text3)':v16>=95?'var(--green)':v16>=80?'var(--yellow)':'var(--red)';
+    document.getElementById('ess-summary').innerHTML = `
+      <div style="text-align:center;padding:20px 0">
+        <div style="font-size:52px;font-weight:700;font-family:'DM Mono';color:${vc}">${isNaN(v16)?'—':v16+'%'}</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:6px">Cumplimiento Sem 16</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:10px">Promedio: <strong>${isNaN(avg)?'—':avg+'%'}</strong></div>
+      </div>`;
+  }
+}
+
+// ═══════════════════════ BITÁCORA ═══════════════════════
+const areaColors = {
+  ads:'#0A5FFF',form:'#12B76A',ventas:'#F79009',landing:'#7C3AED',
+  meta:'#98A2B3',creativos:'#F04438','presu meta':'#06B6D4',jotform:'#12B76A'
+};
+function bitItem(r) {
+  const area = (r[2]||'').toLowerCase().trim();
+  const color = areaColors[area] || '#98A2B3';
+  const activo = (r[6]||'').toLowerCase()==='activo';
+  return `<div class="bit-item" style="border-left-color:${color}">
+    <div class="bit-date">${r[0]||''}</div>
+    <div class="bit-body">
+      <span class="bit-area" style="background:${color}18;color:${color}">${r[2]||''}</span>
+      ${activo?`<span class="bit-estado bit-activo">Activo</span>`:''}
+      <div class="bit-desc">${r[3]||''}</div>
+      ${r[4]?`<div class="bit-motivo">↳ ${r[4]}</div>`:''}
+      ${r[5]?`<div class="bit-motivo" style="color:var(--text)">→ ${r[5]}</div>`:''}
+    </div></div>`;
+}
+function renderBitacora() {
+  const el = document.getElementById('bit-list');
+  if(!S.bitacora) { el.innerHTML='<div style="color:var(--text3);text-align:center;padding:30px">Sin datos.</div>'; return; }
+  const items = S.bitacora.filter((r,i)=>i>0&&r[0]).reverse();
+  el.innerHTML = items.map(r=>bitItem(r)).join('');
+}
+
+// ═══════════════════════ CONTEXT BUILDER ═══════════════════════
+function buildContext(section) {
+  const rv = getRvsO();
+  let ctx = `Sos un analista de marketing B2B de Clienty. Contexto: funnel Meta Ads → VSL → JotForm (GoodForm/BadForm) → Calendly → R1 → R2 → Cierre. Implementación $1.500 USD. Límite CPV operativo $1.050 ideal, referencia $1.800.\n\n`;
+
+  if(rv) {
+    ctx += `EMBUDO ABRIL vs MARZO vs OBJETIVO:\n`;
+    ctx += `Inversión: Real $${rv.abr.inv.real?.toLocaleString()} | Mar $${rv.mar.inv.real?.toLocaleString()} | Obj $${rv.abr.inv.proy?.toLocaleString()}\n`;
+    ctx += `Leads: Real ${rv.abr.leads.real} | Mar ${rv.mar.leads.real} | Obj ${rv.abr.leads.proy}\n`;
+    ctx += `R1: Real ${rv.abr.r1.real} | Mar ${rv.mar.r1.real} | Obj ${rv.abr.r1.proy}\n`;
+    ctx += `Presupuestos: Real ${rv.abr.presu.real} | Mar ${rv.mar.presu.real} | Obj ${rv.abr.presu.proy}\n`;
+    ctx += `Ventas: Real ${rv.abr.ventas.real} | Mar ${rv.mar.ventas.real} | Obj ${rv.abr.ventas.proy}\n`;
+    ctx += `CPL: Real $${rv.abr.cpl.real} | Mar $${rv.mar.cpl.real} | Obj $${rv.abr.cpl.proy}\n`;
+    ctx += `CPV: Real $${rv.abr.cpv.real} | Mar $${rv.mar.cpv.real} | Obj $${rv.abr.cpv.proy}\n\n`;
+  }
+
+  if(S.tablero) {
+    const weekly = [];
+    for(const row of S.tablero) {
+      const v=String(row[0]||'').trim();
+      if(/^\d+$/.test(v)&&parseInt(v)>=12&&parseInt(v)<=17)
+        weekly.push({sem:parseInt(v),leads:pn(row[3]),inv:pn(row[16]),cpl:pn(row[17]),pctGF:row[28],cplGF:pn(row[30])});
+    }
+    ctx += `SEÑALES SEMANA A SEMANA (sems 12-16):\n`;
+    weekly.forEach(w=>ctx+=`Sem ${w.sem}: Leads=${w.leads}, Inv=${usd(w.inv)}, CPL=${usd(w.cpl)}, CPL GF=${usd(w.cplGF)}, %GF=${w.pctGF}\n`);
+    ctx += `Referencia CPL GF: $150. % GF OK: 40-50%. Más de 50% = muy bien. Menos de 40% = alerta.\n`;
+    ctx += `Objetivo CPL Abril: $70.\n\n`;
+  }
+
+  return ctx;
+}
+
+// ═══════════════════════ CHAT / IA ═══════════════════════
+function seedChat(section, context) {
+  const msgs = document.getElementById('msgs-'+section);
+  if(!msgs||msgs.children.length>0) return;
+  autoAnalyze(section, context);
+}
+
+async function autoAnalyze(section, context) {
+  const prompts = {
+    termostato: `${context}Analizá el TERMOSTATO CPV en 5-6 líneas. ¿En qué zona está? ¿Qué lo explica? ¿Tendencia vs mes anterior? ¿Qué hay que hacer? Sé directo.`,
+    embudo: `${context}Analizá el EMBUDO del mes. Identificá las 2-3 principales diferencias vs proyectado. ¿Dónde se cae más el embudo? ¿Qué ratio preocupa más? Sé directo y específico.`,
+    senales: `${context}Analizá las SEÑALES TEMPRANAS de las últimas 5 semanas. ¿Hay tendencia preocupante en CPL o CPL GF? ¿Cómo está el % GF? ¿Qué semana fue mejor/peor? Destacá 2-3 cosas clave.`,
+    plan: `${context}Generá un PLAN DE ACCIÓN para la próxima semana. Máximo 5 acciones concretas ordenadas por impacto. Formato: "1. [Acción] — [motivo breve]"`
+  };
+  const prompt = prompts[section];
+  if(!prompt) return;
+  addMsg(section, 'ai', null, true);
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000,
+        messages:[{role:'user',content:prompt}] })
+    });
+    const data = await res.json();
+    const text = data.content?.map(b=>b.text||'').join('')||'Sin respuesta';
+    replaceLastMsg(section, text);
+    lastAiMsg[section] = text;
+  } catch(e) {
+    replaceLastMsg(section, 'Error al conectar. Verificá la conexión.');
+  }
+}
+
+async function sendChat(section) {
+  const inp = document.getElementById('inp-'+section);
+  const text = inp.value.trim(); if(!text) return;
+  inp.value='';
+  addMsg(section, 'user', text);
+  chatHistory[section].push({role:'user',content:text});
+
+  const ctx = buildContext(section);
+  const systemMsg = `Sos un analista de marketing B2B de Clienty. ${ctx} Respondé de forma directa, en español, sin preamble innecesario.`;
+
+  const messages = chatHistory[section].slice(-8);
+  addMsg(section, 'ai', null, true);
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1000,
+        system: systemMsg, messages
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.map(b=>b.text||'').join('')||'Sin respuesta';
+    replaceLastMsg(section, reply);
+    chatHistory[section].push({role:'assistant',content:reply});
+    lastAiMsg[section] = reply;
+  } catch(e) {
+    replaceLastMsg(section, 'Error al conectar.');
+  }
+}
+
+function addMsg(section, role, text, loading=false) {
+  const msgs = document.getElementById('msgs-'+section);
+  const div = document.createElement('div');
+  div.className = 'msg '+role+(loading?' loading':'');
+  div.innerHTML = loading ? '<div class="spinner"></div> Analizando...' : text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function replaceLastMsg(section, text) {
+  const msgs = document.getElementById('msgs-'+section);
+  const last = msgs.querySelector('.msg.ai.loading');
+  if(last) { last.className='msg ai'; last.textContent=text; }
+  else addMsg(section,'ai',text);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function saveConclusion(section) {
+  const text = lastAiMsg[section];
+  if(!text) { alert('No hay respuesta IA para guardar. Primero generá un análisis.'); return; }
+  savedConclusions[section] = text;
+  const box = document.getElementById('concl-'+section);
+  box.textContent = text;
+  box.classList.remove('placeholder');
+}
+
+// ═══════════════════════ PRELOAD ═══════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  if(window.PRELOADED) {
+    S.t90 = PRELOADED.t90;
+    S.rvso = PRELOADED.rvso;
+    S.essentials = PRELOADED.essentials;
+    S.bitacora = PRELOADED.bitacora;
+    S.tablero = PRELOADED.tablero;
+    renderAll();
+    renderEssentials();
+    renderBitacora();
+  }
+});
+</script>
+<script>
+window.PRELOADED = {"t90": [["ACTUALIZADO AL 30/03", "", "2025", "2025", "2025", "2025", "2025", "2025", "2025", "2025", "2025", "2025", "2025", "2025", "2026", "2026", "2026", "2026", "49", "50", "51", "52", "53", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"], ["Area", "KPI", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "1", "2", "3", "4", "1/12", "8/12", "15/12", "22/12", "29/12", "5/1", "12/1", "19/1", "26/1", "2/2", "9/2", "16/2", "23/2", "2/3", "9/3", "16/3", "23/3", "30/3", "6/4", "13/4", "20/4"], ["Marketing", "Inversi\u00f3n publicidad", "$20.176", "$10.099", "$11.331", "$11.614", "$12.219", "$10.153", "$12.436", "$14.544", "$12.179", "$9.050", "$16.977", "$12.830", "$17.375", "$18.569", "$22.620", "$21.553", "$2.907", "$2.990", "$2.018", "$3.526", "$1.389", "$3.832", "$3.910", "$3.912", "$3.894", "$3.761", "$4.036", "$5.081", "$6.098", "$5.883", "$4.378", "$4.677", "$5.003", "$5.526", "$5.766", "$3.777", "$8.144"], ["Marketing", "Leads", "629", "386", "514", "513", "529", "418", "0", "0", "329", "234", "0", "0", "295", "271", "350", "289", "73", "43", "42", "39", "25", "68", "61", "59", "67", "60", "38", "51", "131", "113", "73", "66", "67", "70", "84", "41", "111"], ["Marketing/Ventas", "R1", "434", "245", "304", "286", "328", "235", "266", "247", "197", "96", "200", "109", "199", "207", "252", "160", "39", "24", "17", "20", "9", "51", "43", "33", "49", "41", "29", "42", "104", "78", "57", "50", "45", "43", "45", "29", "54"], ["Marketing/Ventas", "R2 efectivas", "302", "177", "213", "207", "231", "175", "207", "191", "150", "79", "117", "29", "114", "72", "94", "59", "", "", "14", "12", "3", "32", "24", "18", "25", "16", "10", "15", "32", "26", "15", "22", "23", "18", "18", "17", "12"], ["Marketing/Ventas", "Presupuestos enviados reales", "261", "151", "184", "187", "200", "157", "241", "210", "117", "62", "115", "54", "77", "59", "76", "56", "14", "13", "14", "8", "5", "19", "25", "15", "16", "20", "17", "5", "17", "16", "16", "21", "18", "10", "20", "15", "16"], ["Marketing/Ventas", "Ventas cohort", "33", "20", "25", "18", "28", "19", "29", "27", "28", "20", "0", "0", "14", "10", "4", "1", "2", "0", "3", "3", "1", "3", "3", "3", "3", "2", "3", "0", "5", "1", "0", "1", "1", "1", "1", "0", "0"], ["Marketing/Ventas", "Ventas totales", "33", "34", "25", "27", "24", "43", "29", "38", "30", "43", "21", "10", "14", "13", "10", "6", "6", "1", "0", "1", "2", "6", "2", "2", "4", "2", "2", "2", "7", "4", "1", "2", "1", "2", "2", "2", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["Marketing", "CPL", "$32", "$26", "$22", "$23", "$23", "$24", "", "", "$37", "$39", "", "", "$59", "$69", "$65", "$75", "$40", "$70", "$48", "$90", "$56", "$56", "$64", "$66", "$58", "$63", "$106", "$100", "$47", "$52", "$60", "$71", "$75", "$79", "$69", "$92", "$73"], ["Marketing/Ventas", "$R1", "$46", "$41", "$37", "$41", "$37", "$43", "$47", "$59", "$62", "$94", "$85", "$118", "$87", "$90", "$90", "$135", "$75", "$125", "$119", "$176", "$154", "$75", "$91", "$119", "$79", "$92", "$139", "$121", "$59", "$75", "$77", "$94", "$111", "$129", "$128", "$130", "$151"], ["Marketing/Ventas", "CPE", "$77", "$67", "$62", "$62", "$61", "$65", "$52", "$69", "$104", "$146", "$148", "$238", "$226", "$315", "$298", "$385", "$208", "$230", "$144", "$441", "$278", "$202", "$156", "$261", "$243", "$188", "$237", "$1.016", "$359", "$368", "$274", "$223", "$278", "$553", "$288", "$252", "$509"], ["Marketing/Ventas", "CPV Co", "$611", "$505", "$453", "$645", "$436", "$534", "$429", "$539", "$435", "$453", "", "", "$1.241", "$1.857", "$5.655", "$21.553", "$1.454", "", "$673", "$1.175", "$1.389", "$1.277", "$1.303", "$1.304", "$1.298", "$1.881", "$1.345", "", "$1.220", "$5.883", "", "$4.677", "$5.003", "$5.526", "$5.766", "", ""], ["Marketing/Ventas", "CPV", "$611", "$297", "$453", "$430", "$509", "$236", "$429", "$383", "$406", "$210", "$808", "$1.283", "$1.241", "$1.428", "$2.262", "$3.592", "$485", "$2.990", "", "$3.526", "$695", "$639", "$1.955", "$1.956", "$974", "$1.881", "$2.018", "$2.541", "$871", "$1.471", "$4.378", "$2.339", "$5.003", "$2.763", "$2.883", "$1.889", "$4.072"], ["Marketing/Ventas", "Tasa de cierre (Vta real/Presu real)", "13%", "13%", "14%", "10%", "14%", "12%", "12%", "13%", "24%", "32%", "0%", "0%", "18%", "22%", "13%", "11%", "43%", "8%", "0%", "13%", "40%", "32%", "8%", "13%", "25%", "10%", "12%", "40%", "41%", "25%", "6%", "10%", "6%", "20%", "10%", "13%", "13%"], ["Marketing/Ventas", "Tasa Vtas (Co)/Leads", "5%", "5%", "5%", "4%", "5%", "5%", "", "", "9%", "9%", "", "", "5%", "4%", "1%", "0%", "3%", "0%", "7%", "8%", "4%", "4%", "5%", "5%", "4%", "3%", "8%", "0%", "4%", "1%", "0%", "2%", "1%", "1%", "1%", "0%", "0%"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "Ventas cohort T0", "12", "14", "13", "9", "8", "14", "14", "12", "13", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "Relacion T0/Total", "36%", "70%", "52%", "50%", "29%", "74%", "48%", "44%", "46%", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["Marketing", "Leads", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["Marketing/Ventas", "R1", "69,0%", "63,5%", "59,1%", "55,8%", "62,0%", "56,2%", "#DIV/0!", "#DIV/0!", "59,9%", "41,0%", "#DIV/0!", "", "67,5%", "76,4%", "72,0%", "55,4%", "53,4%", "55,8%", "40,5%", "51,3%", "36,0%", "75,0%", "70,5%", "55,9%", "73,1%", "68,3%", "76,3%", "82,4%", "79,4%", "69,0%", "78,1%", "75,8%", "67,2%", "61,4%", "53,6%", "70,7%", "48,6%"], ["Marketing/Ventas", "R2 efectivas", "48,0%", "45,9%", "41,4%", "40,4%", "43,7%", "41,9%", "#DIV/0!", "#DIV/0!", "45,6%", "33,8%", "#DIV/0!", "", "38,6%", "26,6%", "26,9%", "20,4%", "0,0%", "0,0%", "33,3%", "30,8%", "12,0%", "47,1%", "39,3%", "30,5%", "37,3%", "26,7%", "26,3%", "29,4%", "24,4%", "23,0%", "20,5%", "33,3%", "34,3%", "25,7%", "21,4%", "41,5%", "10,8%"], ["Marketing/Ventas", "Presupuestos enviados", "41,5%", "39,1%", "35,8%", "36,5%", "37,8%", "37,6%", "#DIV/0!", "#DIV/0!", "35,6%", "26,5%", "#DIV/0!", "", "26,1%", "21,8%", "21,7%", "19,4%", "19,2%", "30,2%", "33,3%", "20,5%", "20,0%", "27,9%", "41,0%", "25,4%", "23,9%", "33,3%", "44,7%", "9,8%", "13,0%", "14,2%", "21,9%", "31,8%", "26,9%", "14,3%", "23,8%", "36,6%", "14,4%"], ["Marketing/Ventas", "Ventas cohort", "5,2%", "5,2%", "4,9%", "3,5%", "5,3%", "4,5%", "#DIV/0!", "#DIV/0!", "8,5%", "8,5%", "#DIV/0!", "", "4,7%", "3,7%", "1,1%", "0,3%", "2,7%", "0,0%", "7,1%", "7,7%", "4,0%", "4,4%", "4,9%", "5,1%", "4,5%", "3,3%", "7,9%", "0,0%", "3,8%", "0,9%", "0,0%", "1,5%", "1,5%", "1,4%", "1,2%", "0,0%", "0,0%"], ["Marketing/Ventas", "Ventas totales", "", "", "", "", "", "", "", "", "", "", "", "", "4,7%", "4,8%", "2,9%", "2,1%", "8,2%", "2,3%", "0,0%", "2,6%", "8,0%", "8,8%", "3,3%", "3,4%", "6,0%", "3,3%", "5,3%", "3,9%", "5,3%", "3,5%", "1,4%", "3,0%", "1,5%", "2,9%", "2,4%", "4,9%", "1,8%"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "5,25%", "8,81%", "4,86%", "5,26%", "4,54%", "10,29%", "#DIV/0!", "#DIV/0!", "9,12%", "18,38%", "#DIV/0!", "#DIV/0!", "4,75%", "4,80%", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]], "rvso": [["REAL - PROYECTADO", "", "", "Ene", "", "", "Feb", "", "", "Mar", "", "", "Abr", "", "", "", "Q1", "", ""], ["Area", "KPI", "", "Real", "Proy", "vs", "Real", "Proy", "vs", "Real", "Proy", "vs", "Real", "Proy", "vs", "", "Real", "Proy", "vs"], ["Empresa", "Factu real + puente", "", "$119.686", "$110.000", "$9.686", "$113.546", "$123.393", "-$9.847", "$114.678", "$126.848", "-$12.170", "$103.691", "$129.250", "-$25.559", "", "$347.910", "$360.241", "-$12.331"], ["Finanzas", "Profit USD", "", "$33.169", "$37.400", "-$4.231", "$40.046", "$44.421", "-$4.375", "$35.017", "$48.202", "-$13.185", "$22.000", "$51.700", "-$29.700", "", "$108.232", "$130.023", "-$21.791"], ["Finanzas", "Profit (%)", "", "28%", "34%", "-6%", "35%", "36%", "-1%", "31%", "38%", "-7,5%", "", "40%", "-40,0%", "", "31%", "36%", "-5,0%"], ["Empresa", "Crecimiento USD", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["Marketing", "Inversi\u00f3n publicidad (Sin imp)", "", "$17.375", "$17.000", "$375", "$18.569", "$19.040", "-$471", "$22.620", "$24.000", "-$1.380", "$21.553", "$24.000", "-$2.447", "", "$58.564", "$60.040", "-$1.476"], ["Marketing/Ventas", "Leads", "", "295", "283", "12", "271", "272", "-1", "350", "343", "7", "289", "343", "-54", "", "916", "898", "$18"], ["Marketing/Ventas", "R1 Efectivas", "", "199", "227", "-28", "207", "218", "-11", "252", "275", "-23", "160", "275", "-115", "", "658", "720", "-62"], ["", "", "", "", "", "", "", "", "", "", "", "0", "", "", "0", "", "", "", "0"], ["Marketing/Ventas", "R2 Efectivas", "", "", "", "", "", "", "", "", "", "0", "", "", "0", "", "", "", "0"], ["Marketing/Ventas", "Presupuestos enviados reales", "", "77", "92", "-15", "59", "71", "-12", "76", "91", "-15", "56", "91", "-35", "", "212", "254", "-42"], ["Ventas", "Ventas reales (mes) - Altas", "", "14", "16", "-2", "13", "14", "-1", "10", "20", "-10", "6", "20", "-14", "", "37", "50", "-13"], ["Ventas", "Tasa de cierre", "", "18,18%", "17,39%", "", "22,03%", "19,72%", "", "13,16%", "21,98%", "", "10,71%", "21,98%", "", "", "17%", "20%", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["Marketing", "CPL", "", "$59", "$60", "-$1", "$69", "$70", "-$1", "$65", "$70", "-$5", "$75", "$70", "$5", "", "$192", "$200", "-$8"], ["Marketing", "CPE (Inversion/Presu real)", "", "$226", "$185", "$41", "$315", "$268", "$47", "$298", "$268", "$30", "$385", "$268", "$117", "", "$838", "$721", "$117"], ["Marketing", "CPV (Inversion/Vtas reales)", "", "$1.241", "$1.063", "$179", "$1.428", "$1.360", "$68", "$2.262", "$1.190", "$1.072", "$3.592", "$1.190", "$2.402", "", "$4.931", "$3.613", "$1.319"], ["Marketing", "Tasa de cierre (Vtas co/presu)", "", "18,2%", "17,4%", "0,8%", "22,0%", "19,7%", "2,3%", "13,2%", "22,0%", "-8,8%", "10,7%", "22,0%", "-11,3%", "", "4,0%", "5,6%", "-1,5%"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["CS", "Bajas", "", "25", "21", "4", "24", "20", "4", "27", "17", "10", "28", "17", "11", "", "76", "58", "18"], ["CS", "Churn total", "", "$4.428", "$4.845", "-$417", "$6.583", "$4.626", "$1.957", "$6.283", "$3.927", "$2.356", "$6.078", "$4.074", "$2.004", "", "$17.294", "$13.398", "$3.896"], ["CS", "Churn (%)", "", "3,7%", "4,4%", "-0,7%", "5,8%", "3,8%", "2,0%", "5,4%", "3,1%", "2,3%", "5,8%", "3,2%", "2,7%", "", "5,0%", "3,7%", "1,3%"]], "essentials": [["TRACKING ESSENTIALS - MARKETING FRANCO", "", "", "", "", "", "", ""], ["Seguimiento Semanal - Porcentajes de Cumplimiento", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", ""], ["METRIC / WEEK", "Sem 15\n06/04", "Sem 16\n13/04", "Sem 17\n20/04", "Sem 18\n27/04", "Sem 19\n04/05", "Sem 20\n11/05", "PROMEDIO %"], ["1. VOLUMEN + CALIDAD DE COPYS", "", "", "", "", "", "", ""], ["Copys producidos / 10", "100", "100", "100", "", "", "", ""], ["Filtro validaci\u00f3n %", "100", "100", "100", "", "", "", ""], ["% CUMPLIMIENTO ESSENTIAL 1", "100", "100", "100", "-", "-", "-", "100"], ["", "", "", "", "", "", "", ""], ["2. COPYS VISUALES", "", "", "", "", "", "", ""], ["Tipos de piezas / 3", "100", "100", "100", "", "", "", ""], ["Conceptos creativos / 3", "100", "100", "100", "", "", "", ""], ["Referencias investigadas / 1", "100", "100", "100", "", "", "", ""], ["CPL \u2264 objetivo (S\u00ed/No)", "100", "70", "100", "", "", "", ""], ["% CUMPLIMIENTO ESSENTIAL 2", "100", "93", "100", "-", "-", "-", "98"], ["", "", "", "", "", "", "", ""], ["3. TRAZABILIDAD COMPLETA (Quincenal)", "", "", "", "", "", "", ""], ["Dashboard actualizado (S\u00ed/No)", "100", "100", "100", "", "", "", ""], ["Hip\u00f3tesis propuestas", "100", "100", "-", "", "", "", ""], ["Hip\u00f3tesis ejecutadas (S\u00ed/No)", "100", "100", "-", "", "", "", ""], ["% CUMPLIMIENTO ESSENTIAL 3", "100", "100", "100", "-", "-", "-", "100"], ["", "", "", "", "", "", "", ""], ["4. CLARIDAD DE PRIORIDADES", "", "", "", "", "", "", ""], ["Puntaje Fran (1 al 10)", "85", "90", "40", "", "", "", ""], ["% CUMPLIMIENTO ESSENTIAL 4", "85", "90", "40", "-", "-", "-", "72"], ["", "", "", "", "", "", "", ""], ["% CUMPLIMIENTO TOTAL SEMANA", "96,25", "97,5", "80", "-", "-", "-", "91"]], "tablero": [["", "", "", "Embudo por cantidad", "", "", "", "", "", "", "Ratios", "", "", "", "", "", "$", "", "", "", "", "", "", "Forms", "", "", "", "", "", "", "", "", "", "", "", "Desglose por d\u00eda", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Distribuci\u00f3n forms por d\u00eda", "", "", "", "", "", "", "", "", "", "", ""], ["", "Fecha ini", "Fecha fin", "Leads netos", "R1", "R2", "Presu", "Venta", "Otros", "", "R1/Leads", "R2/R1", "PE/R2", "Vta/PE", "Vta/Lead", "", "Inv.", "CPL", "$/R1", "$/R2", "CPE", "CPV", "", "GF", "BF", "PF", "Sin data", "% Info", "", "GF", "BF", "PF", "$ GF", "", "Semana", "Dia", "Intervalo T", "Leads", "$", "$/u", "0. Lead", "1. R1", "2. Follow podcast", "3.R2", "4. Presupuesto", "5. Venta", "6. otros", "Intervalo 1", "Intervalo 2", "", "Semana", "Dia", "Intervalo T", "Leads", "Inversion Land", "Inversion R1C", "Inv. Total", "Lead GF", "Lead BF", "Lead PF", "Sin data calendly", "Intervalo 1", "Intervalo 2"], ["Inicios13/12", "", "", "1283", "888", "383", "274", "38", "31", "", "69%", "43%", "72%", "14%", "3%", "", " $88.140", " $69", " $99", " $230", " $322", " $2.319", "", "589", "576", "", "149", "", "", "51%", "49%", "", " $150", "", "50", "13/12", "NO", "3", "684", "228", "3", "2", "2", "2", "0", "0", "0", "0", "0", "", "50", "13/12", "NO", "3", "664", "20", "684", "3", "0", "0", "0", "0", "0"], ["T7", "20/04", "26/04", "110", "54", "12", "5", "0", "1", "", "49%", "22%", "42%", "0%", "0%", "", " $8.144", " $74", " $151", " $679", " $1.629", "-", "", "47", "53", "", "", "", "", "47%", "53%", "", " $173", "", "50", "14/12", "NO", "4", "407", "102", "4", "2", "2", "1", "0", "0", "0", "0", "0", "", "50", "14/12", "NO", "4", "339", "68", "407", "3", "0", "0", "1", "0", "0"], ["T14", "13/04", "26/04", "150", "83", "29", "16", "0", "1", "", "55%", "35%", "55%", "0%", "0%", "", " $11.922", " $79", " $144", " $411", " $745", "-", "", "67", "67", "", "", "", "", "50%", "50%", "", " $178", "", "51", "15/12", "NO", "8", "250", "31", "8", "5", "4", "4", "4", "1", "0", "0", "0", "", "51", "15/12", "NO", "8", "148", "102", "250", "2", "1", "0", "5", "0", "0"], ["T30", "28/03", "26/04", "318", "179", "68", "47", "2", "1", "", "56%", "38%", "69%", "4%", "1%", "", " $24.550", " $77", " $137", " $361", " $522", " $12.275", "", "146", "146", "", "", "", "", "50%", "50%", "", " $168", "", "51", "16/12", "NO", "7", "283", "40", "7", "6", "5", "5", "3", "0", "0", "0", "0", "", "51", "16/12", "NO", "7", "182", "101", "283", "6", "0", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "51", "17/12", "NO", "10", "220", "22", "10", "7", "7", "7", "5", "1", "0", "0", "0", "", "51", "17/12", "NO", "10", "117", "103", "220", "7", "0", "0", "3", "0", "0"], ["Invervalo 1", "1/04", "27/04", "286", "160", "59", "40", "1", "3", "", "56%", "37%", "68%", "3%", "0%", "", " $21.554", " $75", " $135", " $365", " $539", " $21.554", "", "132", "131", "19", "", "", "", "50%", "50%", "", " $163", "", "51", "18/12", "NO", "4", "229", "57", "4", "0", "0", "0", "0", "0", "1", "0", "0", "", "51", "18/12", "NO", "4", "132", "97", "229", "1", "2", "0", "1", "0", "0"], ["Invervalo 2", "1/04", "23/04", "241", "152", "59", "40", "1", "3", "", "63%", "39%", "68%", "3%", "0%", "", " $17.590", " $73", " $116", " $298", " $440", " $17.590", "", "115", "108", "14", "", "", "", "52%", "48%", "", " $153", "", "51", "19/12", "NO", "6", "258", "43", "6", "3", "3", "3", "1", "1", "0", "0", "0", "", "51", "19/12", "NO", "6", "167", "91", "258", "4", "2", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "51", "20/12", "NO", "3", "362", "121", "3", "1", "1", "0", "0", "0", "0", "0", "0", "", "51", "20/12", "NO", "3", "294", "68", "362", "1", "0", "0", "2", "0", "0"], ["51", "15/12", "21/12", "47", "30", "22", "16", "4", "1", "", "64%", "73%", "73%", "25%", "9%", "", " $2.018", " $43", " $67", " $92", " $126", " $505", "", "25", "9", "", "14", "71%", "", "74%", "26%", "", " $81", "", "51", "21/12", "NO", "10", "416", "42", "10", "8", "4", "3", "3", "1", "0", "0", "0", "", "51", "21/12", "NO", "10", "314", "102", "416", "4", "4", "0", "2", "0", "0"], ["52", "22/12", "28/12", "38", "23", "13", "9", "4", "2", "", "61%", "57%", "69%", "44%", "11%", "", " $3.526", " $93", " $153", " $271", " $392", " $882", "", "29", "7", "", "4", "90%", "", "81%", "19%", "", " $109", "", "52", "22/12", "NO", "3", "739", "246", "3", "2", "2", "1", "1", "0", "0", "0", "0", "", "52", "22/12", "NO", "3", "685", "54", "739", "1", "2", "0", "0", "0", "0"], ["53", "29/12", "31/12", "14", "13", "6", "5", "1", "0", "", "93%", "46%", "83%", "20%", "7%", "", " $1.389", " $99", " $107", " $231", " $278", " $1.389", "", "8", "6", "", "0", "100%", "", "57%", "43%", "", " $174", "", "52", "23/12", "NO", "4", "568", "142", "4", "2", "2", "2", "1", "0", "0", "0", "0", "", "52", "23/12", "NO", "4", "504", "64", "568", "3", "1", "0", "0", "0", "0"], ["1", "1/01", "4/01", "39", "25", "16", "12", "2", "3", "", "64%", "64%", "75%", "17%", "5%", "", " $2.439", " $63", " $98", " $152", " $203", " $1.220", "", "21", "13", "", "8", "81%", "", "62%", "38%", "", " $94", "", "52", "24/12", "NO", "5", "485", "97", "5", "4", "2", "2", "2", "2", "1", "0", "0", "", "52", "24/12", "NO", "5", "447", "38", "485", "5", "0", "0", "0", "0", "0"], ["2", "5/01", "11/01", "65", "51", "32", "22", "3", "3", "", "78%", "63%", "69%", "14%", "5%", "", " $3.832", " $59", " $75", " $120", " $174", " $1.277", "", "37", "19", "", "12", "82%", "", "66%", "34%", "", " $85", "", "52", "25/12", "NO", "4", "565", "141", "4", "2", "2", "1", "1", "1", "0", "0", "0", "", "52", "25/12", "NO", "4", "565", "", "565", "1", "2", "0", "1", "0", "0"], ["3", "12/01", "18/01", "59", "43", "24", "17", "3", "2", "", "73%", "56%", "71%", "18%", "5%", "", " $3.910", " $66", " $91", " $163", " $230", " $1.303", "", "32", "21", "", "8", "87%", "", "60%", "40%", "", " $106", "", "52", "26/12", "NO", "8", "434", "54", "8", "4", "2", "2", "1", "0", "0", "0", "0", "", "52", "26/12", "NO", "8", "434", "", "434", "5", "0", "0", "3", "0", "0"], ["4", "19/01", "25/01", "57", "33", "18", "12", "3", "2", "", "58%", "55%", "67%", "25%", "5%", "", " $3.912", " $69", " $119", " $217", " $326", " $1.304", "", "18", "24", "", "17", "71%", "", "43%", "57%", "", " $155", "", "52", "27/12", "NO", "5", "337", "67", "5", "2", "2", "1", "0", "0", "0", "0", "0", "", "52", "27/12", "NO", "5", "337", "", "337", "4", "1", "0", "0", "0", "0"], ["5", "26/01", "1/02", "63", "49", "25", "24", "3", "4", "", "78%", "51%", "96%", "13%", "5%", "", " $3.894", " $62", " $79", " $156", " $162", " $1.298", "", "24", "25", "", "18", "73%", "", "49%", "51%", "", " $119", "", "52", "28/12", "NO", "11", "398", "36", "11", "7", "4", "4", "3", "1", "1", "0", "0", "", "52", "28/12", "NO", "11", "398", "", "398", "10", "1", "0", "0", "0", "0"], ["6", "2/02", "8/02", "58", "41", "16", "14", "2", "2", "", "71%", "39%", "88%", "14%", "3%", "", " $3.761", " $65", " $92", " $235", " $269", " $1.881", "", "22", "35", "", "3", "95%", "", "39%", "61%", "", " $162", "", "53", "29/12", "NO", "2", "388", "194", "2", "2", "1", "1", "1", "1", "0", "0", "0", "", "53", "29/12", "NO", "2", "388", "", "388", "1", "1", "0", "0", "0", "0"], ["7", "9/02", "15/02", "37", "29", "10", "9", "3", "1", "", "78%", "34%", "90%", "33%", "8%", "", " $4.036", " $109", " $139", " $404", " $448", " $1.345", "", "16", "20", "", "2", "95%", "", "44%", "56%", "", " $239", "", "53", "30/12", "NO", "7", "161", "23", "7", "7", "4", "3", "3", "0", "0", "0", "0", "", "53", "30/12", "NO", "7", "161", "", "161", "4", "3", "0", "0", "0", "0"], ["8", "16/02", "22/02", "50", "42", "15", "8", "0", "1", "", "84%", "36%", "53%", "0%", "0%", "", " $5.081", " $102", " $121", " $339", " $635", "-", "", "19", "30", "", "2", "96%", "", "39%", "61%", "", " $257", "", "53", "31/12", "NO", "5", "840", "168", "5", "4", "2", "2", "1", "0", "0", "0", "0", "", "53", "31/12", "NO", "5", "840", "", "840", "3", "2", "0", "0", "0", "0"], ["9", "23/02", "1/03", "132", "104", "32", "22", "5", "2", "", "79%", "31%", "69%", "23%", "4%", "", " $6.097", " $46", " $59", " $191", " $277", " $1.219", "", "66", "61", "", "7", "95%", "", "52%", "48%", "", " $88", "", "1", "1/1", "NO", "4", "616", "154", "4", "2", "2", "2", "2", "0", "0", "0", "0", "", "1", "1/1", "NO", "4", "616", "", "616", "0", "3", "0", "1", "0", "0"], ["10", "2/03", "8/03", "112", "78", "26", "21", "1", "1", "", "70%", "33%", "81%", "5%", "1%", "", " $5.882", " $53", " $75", " $226", " $280", " $5.882", "", "39", "62", "", "12", "89%", "", "39%", "61%", "", " $135", "", "1", "2/1", "NO", "13", "586", "45", "13", "8", "6", "5", "3", "0", "2", "0", "0", "", "1", "2/1", "NO", "13", "586", "", "586", "9", "3", "0", "1", "0", "0"], ["11", "9/03", "15/03", "71", "57", "15", "10", "0", "2", "", "80%", "26%", "67%", "0%", "0%", "", " $4.378", " $62", " $77", " $292", " $438", "-", "", "29", "41", "", "3", "96%", "", "41%", "59%", "", " $145", "", "1", "3/1", "NO", "13", "612", "47", "13", "7", "5", "2", "2", "1", "0", "0", "0", "", "1", "3/1", "NO", "13", "612", "", "612", "6", "3", "0", "4", "0", "0"], ["12", "16/03", "22/03", "64", "50", "22", "15", "1", "2", "", "78%", "44%", "68%", "7%", "2%", "", " $4.678", " $73", " $94", " $213", " $312", " $4.678", "", "30", "30", "", "6", "91%", "", "50%", "50%", "", " $142", "", "1", "4/1", "NO", "12", "625", "52", "12", "8", "7", "7", "5", "1", "1", "0", "0", "", "1", "4/1", "NO", "12", "625", "", "625", "6", "4", "0", "2", "0", "0"], ["13", "23/03", "29/03", "67", "45", "23", "14", "1", "0", "", "67%", "51%", "61%", "7%", "1%", "", " $5.004", " $75", " $111", " $218", " $357", " $5.004", "", "31", "32", "", "4", "94%", "", "49%", "51%", "", " $152", "", "2", "5/1", "NO", "4", "601", "150", "4", "4", "4", "2", "2", "0", "0", "0", "0", "", "2", "5/1", "NO", "4", "601", "", "601", "4", "0", "0", "0", "0", "0"], ["14", "30/03", "5/04", "70", "43", "18", "12", "1", "0", "", "61%", "42%", "67%", "8%", "1%", "", " $5.525", " $79", " $128", " $307", " $460", " $5.525", "", "27", "39", "", "4", "94%", "", "41%", "59%", "", " $193", "", "2", "6/1", "NO", "12", "536", "45", "12", "9", "7", "7", "5", "1", "0", "0", "0", "", "2", "6/1", "NO", "12", "536", "", "536", "5", "4", "0", "3", "0", "0"], ["15", "6/04", "12/04", "83", "45", "18", "16", "1", "1", "", "54%", "40%", "89%", "6%", "1%", "", " $5.766", " $69", " $128", " $320", " $360", " $5.766", "", "43", "35", "2", "6", "95%", "", "54%", "46%", "", " $128", "", "2", "7/1", "NO", "19", "519", "27", "19", "13", "10", "9", "5", "0", "2", "0", "0", "", "2", "7/1", "NO", "19", "519", "", "519", "9", "6", "0", "4", "0", "0"], ["16", "13/04", "19/04", "40", "29", "17", "11", "0", "1", "", "73%", "59%", "65%", "0%", "0%", "", " $3.778", " $94", " $130", " $222", " $343", "-", "", "20", "14", "6", "7", "98%", "", "50%", "50%", "", " $184", "", "2", "8/1", "NO", "9", "536", "60", "9", "6", "3", "2", "1", "1", "1", "0", "0", "", "2", "8/1", "NO", "9", "536", "", "536", "6", "1", "0", "2", "0", "0"], ["17", "20/04", "26/04", "110", "54", "12", "5", "0", "1", "", "49%", "22%", "42%", "0%", "0%", "", " $8.144", " $74", " $151", " $679", " $1.629", "-", "", "47", "53", "11", "11", "100%", "", "42%", "58%", "", " $173", "", "2", "9/1", "NO", "4", "545", "136", "4", "3", "2", "2", "1", "0", "0", "0", "0", "", "2", "9/1", "NO", "4", "545", "", "545", "3", "1", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "2", "10/1", "NO", "5", "524", "105", "5", "4", "3", "3", "1", "0", "0", "0", "0", "", "2", "10/1", "NO", "5", "524", "", "524", "3", "2", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "2", "11/1", "NO", "15", "571", "38", "15", "12", "8", "7", "7", "1", "0", "0", "0", "", "2", "11/1", "NO", "15", "571", "", "571", "7", "5", "0", "3", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "3", "12/1", "NO", "11", "595", "54", "11", "8", "5", "5", "5", "1", "0", "0", "0", "", "3", "12/1", "NO", "11", "595", "", "595", "7", "2", "0", "2", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Me gusta mostrar c\u00f3mo viene. Te voy a mandar cuarta foto del proyectado. La \u00faltima foto va a ser del proyectado y me gusta mostrar, aclarar que se tuvo que bajar la inversi\u00f3n. Estamos en un 80% de la inversi\u00f3n planificada por la saturaci\u00f3n de ventas y mostrar que nada les pudo como completo y el versus, la diferencia entre el proyecto del proyectado y como viene, con los porcentajes toda en la misma hoja. Se entiende lo que quiero, pero quiero esto como ir por algo simple, mostrar las m\u00e9tricas como simple, as\u00ed que vean c\u00f3mo venimos las m\u00e9tricas tempranas para ver c\u00f3mo estamos ahora y despu\u00e9s pasar al otro con cosas m\u00e1s de acci\u00f3n, de bueno para marketing, con estos an\u00e1lisis de las ventas para marketing.", "", "3", "13/1", "NO", "9", "586", "65", "9", "6", "4", "4", "3", "1", "0", "0", "0", "", "3", "13/1", "NO", "9", "586", "", "586", "6", "1", "0", "2", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "3", "14/1", "NO", "12", "526", "44", "12", "8", "3", "3", "2", "0", "1", "0", "0", "", "3", "14/1", "NO", "12", "526", "", "526", "7", "2", "0", "3", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Nos llevamos esto para ventas, nos llevamos esto lo de cambiar el platform, o sea, como definir en la reuni\u00f3n si agregar la pregunta para hot form y mandar alguno para el podcast lo de qu\u00e9 ventas. Tal y o igual que analice esas reuniones para ver si se puede mejorar algo de cierre y las conclusiones que vayamos sacando antes de hacerlo.", "", "3", "15/1", "NO", "6", "533", "89", "6", "6", "5", "2", "2", "0", "0", "0", "0", "", "3", "15/1", "NO", "6", "533", "", "533", "2", "4", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "3", "16/1", "NO", "8", "476", "60", "8", "5", "3", "3", "1", "0", "1", "0", "0", "", "3", "16/1", "NO", "8", "476", "", "476", "5", "3", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Decime si tenes alguna pregunta. No quiero que sea un informe mega extenso; quiero que sea claro y te descargue tambi\u00e9n el logo de Clienty en el proyecto para que puedas adaptarlo a esos colores.", "", "3", "17/1", "NO", "11", "593", "54", "11", "8", "7", "5", "3", "1", "0", "0", "0", "", "3", "17/1", "NO", "11", "593", "", "593", "3", "7", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "3", "18/1", "NO", "4", "601", "150", "4", "2", "2", "2", "1", "0", "0", "0", "0", "", "3", "18/1", "NO", "4", "601", "", "601", "2", "2", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "4", "19/1", "NO", "20", "585", "29", "20", "9", "4", "4", "3", "1", "1", "0", "0", "", "4", "19/1", "NO", "20", "585", "", "585", "5", "6", "0", "9", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "4", "20/1", "NO", "7", "611", "87", "7", "4", "2", "2", "1", "1", "0", "0", "0", "", "4", "20/1", "NO", "7", "611", "", "611", "3", "3", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "4", "21/1", "NO", "7", "538", "77", "7", "4", "4", "4", "3", "1", "0", "0", "0", "", "4", "21/1", "NO", "7", "538", "", "538", "2", "3", "0", "2", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "4", "22/1", "NO", "9", "489", "54", "9", "7", "5", "5", "3", "0", "0", "0", "0", "", "4", "22/1", "NO", "9", "489", "", "489", "2", "5", "0", "2", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "4", "23/1", "NO", "6", "559", "93", "6", "4", "3", "1", "1", "0", "0", "0", "0", "", "4", "23/1", "NO", "6", "559", "", "559", "1", "4", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "4", "24/1", "NO", "4", "573", "143", "4", "1", "1", "1", "1", "0", "1", "0", "0", "", "4", "24/1", "NO", "4", "573", "", "573", "2", "1", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "4", "25/1", "NO", "6", "557", "93", "6", "4", "3", "1", "0", "0", "0", "0", "0", "", "4", "25/1", "NO", "6", "557", "", "557", "3", "2", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "5", "26/1", "NO", "12", "594", "50", "12", "8", "4", "4", "4", "0", "0", "0", "0", "", "5", "26/1", "NO", "12", "594", "", "594", "5", "2", "0", "5", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "5", "27/1", "NO", "16", "605", "38", "16", "15", "8", "6", "6", "2", "0", "0", "0", "", "5", "27/1", "NO", "16", "605", "", "605", "2", "10", "0", "4", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "5", "28/1", "NO", "9", "579", "64", "9", "8", "5", "4", "4", "0", "0", "0", "0", "", "5", "28/1", "NO", "9", "579", "", "579", "6", "3", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "5", "29/1", "NO", "12", "522", "44", "12", "7", "7", "6", "6", "0", "3", "0", "0", "", "5", "29/1", "NO", "12", "522", "", "522", "4", "2", "0", "6", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "5", "30/1", "NO", "11", "481", "44", "11", "6", "3", "2", "2", "0", "1", "0", "0", "", "5", "30/1", "NO", "11", "481", "", "481", "6", "4", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "5", "31/1", "NO", "5", "501", "100", "5", "3", "3", "2", "2", "1", "0", "0", "0", "", "5", "31/1", "NO", "5", "501", "", "501", "0", "3", "0", "2", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "5", "1/2", "NO", "2", "612", "306", "2", "2", "1", "1", "0", "0", "0", "0", "0", "", "5", "1/2", "NO", "2", "612", "", "612", "1", "1", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "6", "2/2", "NO", "10", "527", "53", "10", "8", "4", "3", "2", "0", "1", "0", "0", "", "6", "2/2", "NO", "10", "527", "", "527", "5", "4", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "6", "3/2", "NO", "9", "517", "57", "9", "7", "4", "4", "4", "2", "0", "0", "0", "", "6", "3/2", "NO", "9", "517", "", "517", "4", "5", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "6", "4/2", "NO", "10", "495", "50", "10", "5", "4", "2", "2", "0", "1", "0", "0", "", "6", "4/2", "NO", "10", "495", "", "495", "2", "7", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "6", "5/2", "NO", "13", "514", "40", "13", "9", "4", "3", "3", "0", "0", "0", "0", "", "6", "5/2", "NO", "13", "514", "", "514", "4", "8", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "6", "6/2", "NO", "4", "571", "143", "4", "3", "2", "1", "0", "0", "0", "0", "0", "", "6", "6/2", "NO", "4", "571", "", "571", "0", "4", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "6", "7/2", "NO", "5", "529", "106", "5", "3", "2", "1", "1", "0", "0", "0", "0", "", "6", "7/2", "NO", "5", "529", "", "529", "2", "3", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "6", "8/2", "NO", "9", "608", "68", "9", "6", "2", "2", "2", "0", "0", "0", "0", "", "6", "8/2", "NO", "9", "608", "", "608", "5", "4", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "7", "9/2", "NO", "9", "601", "67", "9", "6", "4", "2", "2", "0", "1", "0", "0", "", "7", "9/2", "NO", "9", "601", "", "601", "3", "4", "0", "2", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "7", "10/2", "NO", "8", "597", "75", "8", "6", "2", "1", "1", "0", "0", "0", "0", "", "7", "10/2", "NO", "8", "597", "", "597", "3", "5", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "7", "11/2", "NO", "7", "593", "85", "7", "5", "3", "2", "1", "1", "0", "0", "0", "", "7", "11/2", "NO", "7", "593", "", "593", "3", "4", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "7", "12/2", "NO", "3", "519", "173", "3", "2", "2", "1", "1", "1", "0", "0", "0", "", "7", "12/2", "NO", "3", "519", "", "519", "1", "2", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "7", "13/2", "NO", "3", "533", "178", "3", "3", "2", "1", "1", "0", "0", "0", "0", "", "7", "13/2", "NO", "3", "533", "", "533", "2", "1", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "7", "14/2", "NO", "3", "610", "203", "3", "2", "2", "1", "1", "0", "0", "0", "0", "", "7", "14/2", "NO", "3", "610", "", "610", "2", "1", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "7", "15/2", "NO", "5", "583", "117", "5", "5", "3", "2", "2", "1", "0", "0", "0", "", "7", "15/2", "NO", "5", "583", "", "583", "2", "3", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "8", "16/2", "NO", "4", "603", "151", "4", "3", "3", "2", "2", "0", "0", "0", "0", "", "8", "16/2", "NO", "4", "603", "", "603", "3", "1", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "8", "17/2", "NO", "5", "665", "133", "5", "4", "2", "1", "1", "0", "0", "0", "0", "", "8", "17/2", "NO", "5", "665", "", "665", "3", "2", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "8", "18/2", "NO", "6", "585", "98", "6", "6", "2", "2", "1", "0", "0", "0", "0", "", "8", "18/2", "NO", "6", "585", "", "585", "2", "4", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "8", "19/2", "NO", "17", "785", "46", "17", "13", "5", "4", "2", "0", "1", "0", "0", "", "8", "19/2", "NO", "17", "", "", "785", "3", "14", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "8", "20/2", "NO", "13", "826", "64", "13", "11", "6", "4", "1", "0", "0", "0", "0", "", "8", "20/2", "NO", "13", "", "", "826", "7", "4", "0", "2", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "8", "21/2", "NO", "5", "759", "152", "5", "4", "2", "2", "1", "0", "0", "0", "0", "", "8", "21/2", "NO", "5", "", "", "759", "1", "4", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "8", "22/2", "NO", "1", "858", "858", "1", "1", "0", "0", "0", "0", "0", "0", "0", "", "8", "22/2", "NO", "1", "", "", "858", "0", "1", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "9", "23/2", "NO", "15", "716", "48", "15", "12", "5", "5", "5", "1", "0", "0", "0", "", "9", "23/2", "NO", "15", "", "", "716", "9", "6", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "9", "24/2", "NO", "13", "814", "63", "13", "11", "3", "2", "1", "0", "0", "0", "0", "", "9", "24/2", "NO", "13", "", "", "814", "6", "7", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "9", "25/2", "NO", "25", "1009", "40", "24", "19", "14", "8", "6", "2", "0", "0", "0", "", "9", "25/2", "NO", "25", "", "", "1009", "14", "10", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "9", "26/2", "NO", "24", "866", "36", "22", "16", "10", "5", "3", "0", "0", "0", "0", "", "9", "26/2", "NO", "24", "", "", "866", "9", "11", "0", "4", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "9", "27/2", "NO", "18", "861", "48", "18", "14", "7", "3", "2", "0", "1", "0", "0", "", "9", "27/2", "NO", "18", "", "", "861", "8", "9", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "9", "28/2", "NO", "25", "813", "33", "25", "21", "16", "7", "5", "2", "1", "0", "0", "", "9", "28/2", "NO", "25", "", "", "813", "10", "14", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "9", "1/3", "NO", "14", "1019", "73", "14", "11", "3", "2", "0", "0", "0", "0", "0", "", "9", "1/3", "NO", "14", "", "", "1019", "10", "4", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "10", "2/3", "NO", "19", "937", "49", "19", "15", "7", "6", "4", "0", "0", "0", "0", "", "10", "2/3", "NO", "19", "", "", "937", "8", "10", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "10", "3/3", "NO", "21", "905", "43", "21", "13", "7", "4", "4", "0", "0", "0", "0", "", "10", "3/3", "NO", "21", "", "", "905", "7", "14", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "10", "4/3", "NO", "22", "926", "42", "22", "16", "11", "6", "5", "1", "0", "0", "0", "", "10", "4/3", "NO", "22", "", "", "926", "5", "9", "0", "8", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "10", "5/3", "NO", "18", "798", "44", "18", "9", "7", "5", "5", "0", "1", "0", "0", "", "10", "5/3", "NO", "18", "", "", "798", "4", "12", "0", "2", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "10", "6/3", "NO", "11", "690", "63", "11", "8", "4", "2", "2", "0", "0", "0", "0", "", "10", "6/3", "NO", "11", "", "", "690", "5", "6", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "10", "7/3", "NO", "13", "812", "62", "13", "10", "3", "2", "1", "0", "0", "0", "0", "", "10", "7/3", "NO", "13", "", "", "812", "8", "5", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "10", "8/3", "NO", "9", "815", "91", "9", "7", "3", "1", "0", "0", "0", "0", "0", "", "10", "8/3", "NO", "9", "", "", "815", "2", "6", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "11", "9/3", "NO", "18", "769", "43", "18", "8", "2", "1", "0", "0", "1", "0", "0", "", "11", "9/3", "NO", "18", "", "", "769", "10", "5", "0", "3", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "11", "10/3", "NO", "10", "699", "70", "10", "10", "8", "6", "3", "0", "0", "0", "0", "", "11", "10/3", "NO", "10", "", "", "699", "2", "8", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "11", "11/3", "NO", "10", "553", "55", "10", "9", "5", "3", "2", "0", "1", "0", "0", "", "11", "11/3", "NO", "10", "", "", "553", "3", "7", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "11", "12/3", "NO", "8", "516", "64", "8", "8", "1", "1", "1", "0", "0", "0", "0", "", "11", "12/3", "NO", "8", "", "", "516", "2", "6", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "11", "13/3", "NO", "12", "574", "48", "12", "11", "1", "1", "1", "0", "0", "0", "0", "", "11", "13/3", "NO", "12", "", "", "574", "4", "8", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "11", "14/3", "NO", "7", "638", "91", "7", "5", "3", "2", "2", "0", "0", "0", "0", "", "11", "14/3", "NO", "7", "", "", "638", "3", "4", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "11", "15/3", "NO", "8", "629", "79", "8", "6", "2", "1", "1", "0", "0", "0", "0", "", "11", "15/3", "NO", "8", "", "", "629", "5", "3", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "12", "16/3", "NO", "7", "836", "119", "7", "6", "4", "4", "1", "0", "0", "0", "0", "", "12", "16/3", "NO", "7", "", "", "836", "4", "3", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "12", "17/3", "NO", "7", "589", "84", "7", "7", "5", "5", "4", "0", "0", "0", "0", "", "12", "17/3", "NO", "7", "", "", "589", "2", "4", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "12", "18/3", "NO", "8", "555", "69", "8", "7", "1", "0", "0", "0", "0", "0", "0", "", "12", "18/3", "NO", "8", "", "", "555", "4", "4", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "12", "19/3", "NO", "15", "595", "40", "15", "13", "8", "7", "4", "1", "1", "0", "0", "", "12", "19/3", "NO", "15", "", "", "595", "4", "10", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "12", "20/3", "NO", "10", "731", "73", "10", "8", "6", "4", "4", "0", "1", "0", "0", "", "12", "20/3", "NO", "10", "", "", "731", "6", "3", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "12", "21/3", "NO", "14", "668", "48", "14", "7", "2", "1", "1", "0", "0", "0", "0", "", "12", "21/3", "NO", "14", "", "", "668", "7", "5", "0", "2", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "12", "22/3", "NO", "5", "703", "141", "5", "2", "1", "1", "1", "0", "0", "0", "0", "", "12", "22/3", "NO", "5", "", "", "703", "3", "1", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "13", "23/3", "NO", "10", "749", "75", "10", "8", "5", "4", "2", "1", "0", "0", "0", "", "13", "23/3", "NO", "10", "", "", "749", "5", "3", "0", "2", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "13", "24/3", "NO", "10", "775", "77", "10", "7", "5", "5", "2", "0", "0", "0", "0", "", "13", "24/3", "NO", "10", "", "", "775", "4", "6", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "13", "25/3", "NO", "6", "705", "117", "6", "5", "3", "2", "1", "0", "0", "0", "0", "", "13", "25/3", "NO", "6", "", "", "705", "2", "4", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "13", "26/3", "NO", "14", "759", "54", "14", "10", "5", "3", "1", "0", "0", "0", "0", "", "13", "26/3", "NO", "14", "", "", "759", "6", "8", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "13", "27/3", "NO", "12", "679", "57", "12", "7", "7", "6", "5", "0", "0", "0", "0", "", "13", "27/3", "NO", "12", "", "", "679", "5", "6", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "13", "28/3", "T30", "6", "687", "115", "6", "4", "3", "3", "3", "0", "0", "0", "0", "", "13", "28/3", "T30", "6", "", "", "687", "2", "3", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "13", "29/3", "T30", "9", "649", "72", "9", "4", "1", "0", "0", "0", "0", "0", "0", "", "13", "29/3", "T30", "9", "", "", "649", "7", "2", "0", "0", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "14", "30/3", "T30", "10", "873", "87", "10", "7", "6", "4", "3", "1", "0", "0", "0", "", "14", "30/3", "T30", "10", "", "", "873", "3", "6", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "14", "31/3", "T30", "7", "787", "112", "7", "4", "2", "2", "1", "0", "0", "0", "0", "", "14", "31/3", "T30", "7", "", "", "787", "2", "4", "0", "1", "0", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "14", "1/4", "T30", "11", "694", "63", "11", "8", "3", "2", "1", "0", "0", "1", "2", "", "14", "1/4", "T30", "11", "", "", "694", "2", "9", "0", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "14", "2/4", "T30", "9", "665", "74", "9", "4", "3", "3", "3", "0", "0", "1", "2", "", "14", "2/4", "T30", "9", "", "", "665", "5", "3", "0", "1", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "14", "3/4", "T30", "13", "801", "62", "13", "9", "3", "3", "1", "0", "0", "1", "2", "", "14", "3/4", "T30", "13", "", "", "801", "5", "8", "0", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "14", "4/4", "T30", "10", "774", "77", "10", "5", "1", "1", "1", "0", "0", "1", "2", "", "14", "4/4", "T30", "10", "", "", "774", "5", "5", "0", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "14", "5/4", "T30", "10", "932", "93", "10", "6", "5", "3", "2", "0", "0", "1", "2", "", "14", "5/4", "T30", "10", "", "", "932", "5", "4", "0", "1", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "15", "6/4", "T30", "8", "530", "66", "8", "6", "2", "2", "2", "0", "0", "1", "2", "", "15", "6/4", "T30", "8", "", "", "530", "1", "6", "0", "1", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "15", "7/4", "T30", "9", "489", "54", "9", "8", "3", "3", "2", "0", "0", "1", "2", "", "15", "7/4", "T30", "9", "", "", "489", "3", "6", "0", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "15", "8/4", "T30", "11", "996", "91", "11", "5", "2", "1", "1", "0", "0", "1", "2", "", "15", "8/4", "T30", "11", "", "", "996", "6", "5", "0", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "15", "9/4", "T30", "15", "963", "64", "15", "6", "3", "3", "3", "0", "0", "1", "2", "", "15", "9/4", "T30", "15", "", "", "963", "9", "4", "0", "2", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "15", "10/4", "T30", "16", "922", "58", "16", "9", "6", "5", "5", "0", "0", "1", "2", "", "15", "10/4", "T30", "16", "", "", "922", "10", "5", "0", "1", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "15", "11/4", "T30", "12", "960", "80", "12", "1", "0", "0", "0", "0", "1", "1", "2", "", "15", "11/4", "T30", "12", "", "", "960", "7", "5", "0", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "15", "12/4", "T30", "13", "906", "70", "13", "10", "6", "4", "3", "1", "0", "1", "2", "", "15", "12/4", "T30", "13", "", "", "906", "7", "4", "2", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "16", "13/4", "T14", "11", "882", "80", "11", "7", "4", "4", "1", "0", "0", "1", "2", "", "16", "13/4", "T14", "11", "", "", "882", "5", "5", "1", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "16", "14/4", "T14", "7", "381", "54", "7", "4", "4", "3", "3", "0", "1", "1", "2", "", "16", "14/4", "T14", "7", "", "", "381", "5", "1", "0", "1", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "16", "15/4", "T14", "1", "0", "0", "1", "1", "0", "0", "0", "0", "0", "1", "2", "", "16", "15/4", "T14", "1", "", "", "0", "0", "1", "0", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "16", "16/4", "T14", "1", "0", "0", "1", "1", "0", "0", "0", "0", "0", "1", "2", "", "16", "16/4", "T14", "1", "", "", "0", "0", "1", "0", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "16", "17/4", "T14", "9", "692", "77", "9", "7", "4", "3", "2", "0", "0", "1", "2", "", "16", "17/4", "T14", "9", "", "", "692", "4", "5", "0", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "16", "18/4", "T14", "10", "1466", "147", "10", "7", "5", "5", "3", "0", "0", "1", "2", "", "16", "18/4", "T14", "10", "", "", "1466", "5", "1", "4", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "16", "19/4", "T14", "2", "356", "178", "2", "2", "2", "2", "2", "0", "0", "1", "2", "", "16", "19/4", "T14", "2", "", "", "356", "1", "0", "1", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "17", "20/4", "T7", "12", "831", "69", "12", "10", "8", "5", "2", "0", "0", "1", "2", "", "17", "20/4", "T7", "12", "", "", "831", "6", "4", "2", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "17", "21/4", "T7", "15", "994", "66", "15", "8", "6", "3", "3", "0", "0", "1", "2", "", "17", "21/4", "T7", "15", "", "", "994", "7", "8", "0", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "17", "22/4", "T7", "22", "943", "43", "22", "15", "10", "3", "0", "0", "1", "1", "2", "", "17", "22/4", "T7", "22", "", "", "943", "6", "12", "4", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "17", "23/4", "T7", "17", "1412", "83", "17", "13", "7", "1", "0", "0", "0", "1", "2", "", "17", "23/4", "T7", "17", "", "", "1412", "11", "6", "0", "0", "1", "2"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "17", "24/4", "T7", "17", "1371", "81", "17", "8", "4", "0", "0", "0", "0", "1", "0", "", "17", "24/4", "T7", "17", "", "", "1371", "6", "8", "3", "0", "1", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "17", "25/4", "T7", "13", "1216", "94", "13", "0", "0", "0", "0", "0", "0", "1", "0", "", "17", "25/4", "T7", "13", "", "", "1216", "6", "6", "1", "0", "1", "0"], ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "17", "26/4", "T7", "15", "1377", "92", "15", "0", "0", "0", "0", "0", "0", "1", "0", "", "17", "26/4", "T7", "15", "", "", "1377", "5", "9", "1", "0", "1", "0"]], "weekly_senales": [{"sem": 12, "fi": "16/03", "ff": "22/03", "leads": "64", "inv": "$4.678", "cpl": "$73", "gf": "30", "bf": "30", "pct_gf": "50.0%", "cpl_gf": "$156"}, {"sem": 13, "fi": "23/03", "ff": "29/03", "leads": "67", "inv": "$5.004", "cpl": "$75", "gf": "31", "bf": "32", "pct_gf": "49.2%", "cpl_gf": "$161"}, {"sem": 14, "fi": "30/03", "ff": "5/04", "leads": "70", "inv": "$5.525", "cpl": "$79", "gf": "27", "bf": "39", "pct_gf": "40.9%", "cpl_gf": "$205"}, {"sem": 15, "fi": "6/04", "ff": "12/04", "leads": "83", "inv": "$5.766", "cpl": "$69", "gf": "43", "bf": "35", "pct_gf": "55.1%", "cpl_gf": "$134"}, {"sem": 16, "fi": "13/04", "ff": "19/04", "leads": "40", "inv": "$3.778", "cpl": "$94", "gf": "20", "bf": "14", "pct_gf": "58.8%", "cpl_gf": "$189"}, {"sem": 17, "fi": "20/04", "ff": "26/04", "leads": "110", "inv": "$8.144", "cpl": "$74", "gf": "47", "bf": "53", "pct_gf": "47.0%", "cpl_gf": "$173"}], "bitacora": [["Fecha inicio", "Fecha fin", "\u00c1rea", "Descripci\u00f3n del cambio", "Motivo / Hip\u00f3tesis", "Resultado observado", "Estado"], ["21/04", "27/04", "Mkt", "Pausa actividades Mkt \u2014 Fran suma foco en Ventas", "Decisi\u00f3n t\u00e1ctica semanal: refuerzo en proceso de ventas", "", "Activo"], ["Agosto", "26/11", "Embudo", "Testeo R1 (definitivo desde 26/11)", "Mejorar filtrado del lead", "Mejor orden del proceso y seguimiento", "Activo"], ["1/12", "", "Ventas", "Inicio Implementaci\u00f3n L10", "", "", ""], ["13/12", "", "Landing", "Nueva landing publicada", "Filtrar buyer m\u00e1s evolucionado", "Mejor calidad lead", "Activo"], ["31/12", "", "Ads", "Cambio de objetivo copys a Lead Generation", "Alinear campa\u00f1as con Landing y Ventas", "Mejor fit", "Activo"], ["14/01", "", "Form", "Cambio de pregunta en formulario (sobre publicidad)", "Antes preguntaba por consultas", "En an\u00e1lisis", "Activo"], ["16/01", "", "Ads", "Baja campa\u00f1as NO Lead Generation", "Full foco en coherencia del embudo / +LG", "", "Activo"], ["17/01", "", "Ads", "Alta de 2 campa\u00f1as de testeo con carruseles", "Testeo creativo controlado", "Hubspot muy bien.\nCarruseles largos muy mal.", "Activo"], ["20/01", "", "Ads", "Testeo TC solo carruseles LG / ubicaci\u00f3n solo Feed", "Evitar formato video autom\u00e1tico en Stories/Reels", "Resultado negativo", "Activo"], ["21/01", "", "Ads", "Nuevo conjunto de anuncios con mismos creativos Ganadores", "Mala performance del set anterior", "En an\u00e1lisis", "Activo"], ["22/01", "", "Form", "Cambio de pregunta en formulario (GF incluye gerentes)", "Mejor calificaci\u00f3n del lead y rol decisor", "Pendiente", "Activo"], ["27/01", "", "Form", "Cmabio de pregunta en formulario (espec\u00edfica qu\u00e9 es publicidad)", "Que no se confunda con CM, agencia, etc.", "", "Activo"], ["03/02", "", "Ventas", "Podcast Obligatorio", "Sube calidad R2", "", ""], ["07/02", "", "Ads", "Nuevo conjunto de anuncios Pilar reutilizado: CRM", "", "", "Activo"], ["07/02", "", "Ads", "Nueva estructura Meta: Ganadores 80% presupuesto", "Darle a Meta control casi total, manteniendo volumen, variedad y calidad de copys; va a hacer que bajen costos de R1GF", "", "Activo"], ["09/02", "", "Ventas", "Implementaci\u00f3n 1500usd", "", "", ""], ["11/02", "", "Ads", "Nueva tanda Pilar reutilizado: Publicidad", "", "", "Activo"], ["18/02", "", "Ads", "Nueva tanda Pilar nuevo: +1000usd ads + equipo comercial profesional", "Nueva campa\u00f1a para llegar a un buyer 5 estrellas", "", "Activo"], ["18/02", "", "Creativos", "Los mantemeos activos pero en principio se comieron mucho presupuesto y empeoraron performance en general", "Simple post poco nutritivos empeoran performance ", "", ""], ["18/02", "", "Landing", "Se bloquean TODOS los botones cta con 30seg ", "", "", ""], ["23/02", "", "Ads", "Se duplica campa\u00f1a B3 estrellas pero sin simple post", "", "", ""], ["25/02", "", "Ads", "Se sube pilar Tu mejor vendedor a campa\u00f1a B3 estrellas (Beltr\u00e1n)", "", "", ""], ["03/03", "", "Ventas y Meta", "Saturaci\u00f3n en R1 y R2 ventas, se baja presupuesto progresivamnete", "", "", ""], ["05/03", "", "Meta", "4 y 5 /03 problema de Make con Meta (no devuelve evento conv.)", "", "", ""], ["07/03", "", "Ads", "Tanda Probaron otro CRM", "", "", ""], ["07/03", "", "Ads", "Tanda Seguimiento", "", "", ""], ["13/03", "", "Ads", "Tanda B2B + 1000usd + proceso largo. (B5)", "", "", ""], ["13/03", "", "Ads", "Tanda remarketing", "", "", ""], ["20/3", "", "Ads", "Tanda B3- Visibilidad vendedores", "", "", ""], ["20/3", "", "Ads", "Suba presupuesto +20% Campa\u00f1a B3", "", "", ""], ["31/03", "", "Ads", "Se apaga formato wpp y otro ad (buscar numeros)", "", "", ""], ["03/04", "", "Presu Meta", "Subimos presupuesto Ads +10%", "", "Evaluar performance si ir a un 5% +, semana q viene", ""], ["10/4", " ", "JotForm", "Empieza a correr PodcastForm", "", "", ""], ["14 a 20/4", "", "Meta", "Problemas de Basso Brovelli - l\u00ednea de cr\u00e9dito pausada", "", "", ""], ["23/4", "", "Presu Meta", "Aumento de inversi\u00f3n para llegar a invertir todo el presupuesto", "", "", ""], ["1/12", "", "Ventas", "Inicio implementaci\u00f3n L10", "", "", ""], ["13/12", "", "Ventas", "Landing page", "", "", ""], ["05/01", "", "Ventas", "Cambio plan exterior", "Plan 1. (SIn whatsapp). 140 u$d.\nPlan 2. (Con whatsapp). 200 u$d", "", ""], ["07/01", "", "Ventas", "Feli R1 - Cambio proceso", "Se adelantan los llamados", "", ""], ["14/01", "", "Ventas", "Cambio pregunta form mkt", "", "", ""], ["26/01", "", "Ventas", "Cambio a 300 u$d", "", "", ""], ["26/01", "", "Ventas", "Cambio metodolog\u00eda de formatos meta", "Mayor diversidad, autonom\u00eda andromeda", "", ""], ["03/02", "", "Ventas", "Podcast obligatorio", "", "", ""], ["07/02", "", "Ventas", "Cambio metodolog\u00eda andromeda", "", "", ""], ["09/02", "", "Ventas", "Cambio implementaci\u00f3n", "$2.200.000 + IVA\nImplementaci\u00f3n : 1490 U$D", "", ""], ["11/02", "", "Ventas", "Feli en R2", "Comienzo a validar presentaci\u00f3n de oferta", "", ""], ["19/02", "", "Ventas", "Aumento inversion en mkt.", "Colapso de embudo (Colapso 10 d\u00edas dsp)", "", ""], ["08/04", "", "Ventas", "Podcast vuelve a no ser obligatorio", "Colapso de embudo (Colapso 10 d\u00edas dsp)", "", ""], ["24/04", "", "Ventas", "Cuotas implementaci\u00f3n. Abono mensual diferido", "1 pago 1500 o 1800 en 3 pagos de 600\nAbono mensual se cobra desde el mes 2", "", ""], ["PEND", "", "Ventas", "Aumento de 2 cuotas", "", "", ""], ["26/01", "", "Proceso", "Comienzo primera etapa tableros seguimiento", "Busqueda de trazabilidad absoluta", "", ""], ["29/01", "", "Proceso", "Reunion Mkt - Vtas - CS", "Busqueda de trazabilidad absoluta", "", ""], ["19/02", "", "Proceso", "Feli comienza a preparar podcast de alto impacto", "", "", ""], ["26/02", "", "Proceso", "Generaci\u00f3n nexo Vtas - CS ", "Busqueda de metodolog\u00eda de ventas por industria, estrategias comerciales grales, exito promesa ventas vs implementaci\u00f3n", "", ""], ["26/02", "", "Proceso", "(Feli) - Testimonios", "", "", ""], ["26/02", "", "Proceso", "(Juan) - Pedir testimonios a Meli x rubro.", "", "", ""]], "cpl_obj": {"12": 70, "13": 70, "14": 70, "15": 70, "16": 70, "17": 74}};
+</script></body>
+</html>
